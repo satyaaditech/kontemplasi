@@ -194,8 +194,18 @@ HTML_ADMIN = """<!DOCTYPE html>
     .badge-id { background: #991b1b; color: white; }
     .badge-jv { background: #92400e; color: white; }
     .badge-en { background: #3730a3; color: white; }
-    .badge-poster { background: #065f46; color: #a7f3d0; }
-    .badge-audio { background: #1e3a8a; color: #bfdbfe; }
+    /* CATEGORY BADGES */
+    .badge-cat-admin {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .cat-admin-renungan { background: #1e3a8a; color: #bfdbfe; }
+    .cat-admin-esai { background: #581c87; color: #f5d0fe; }
+    .cat-admin-readers { background: #14532d; color: #bbf7d0; }
+    .cat-admin-ulasan { background: #78350f; color: #fde68a; }
 
     /* STATUS SELECTOR */
     .status-select {
@@ -422,16 +432,23 @@ HTML_ADMIN = """<!DOCTYPE html>
     <!-- PANEL LIST -->
     <div class="panel active" id="panel-list">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <input type="text" id="searchTable" placeholder="🔍 Cari renungan..." style="padding:8px 14px; border-radius:8px; background:var(--surface); border:1px solid var(--surface-border); color:var(--text); width:260px; outline:none;" oninput="filterTable()">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <input type="text" id="searchTable" placeholder="🔍 Cari judul/topik/penulis..." style="padding:8px 14px; border-radius:8px; background:var(--surface); border:1px solid var(--surface-border); color:var(--text); width:230px; outline:none;" oninput="filterTable()">
           <div style="display:flex; gap:4px;">
-            <button class="filter-btn active" onclick="setStatusFilter('all', this)">Semua</button>
+            <button class="filter-btn active" onclick="setStatusFilter('all', this)">Semua Status</button>
             <button class="filter-btn" onclick="setStatusFilter('published', this)">🟢 Published</button>
             <button class="filter-btn" onclick="setStatusFilter('draft', this)">🟡 Draft</button>
             <button class="filter-btn" onclick="setStatusFilter('unpublished', this)">⚪ Unpublished</button>
           </div>
+          <div style="display:flex; gap:4px; margin-left:6px;">
+            <button class="filter-btn active" onclick="setCategoryTabFilter('all', this)">Semua Kategori</button>
+            <button class="filter-btn" onclick="setCategoryTabFilter('renungan-harian', this)">🌅 Renungan</button>
+            <button class="filter-btn" onclick="setCategoryTabFilter('esai-kontemplasi', this)">✍️ Esai</button>
+            <button class="filter-btn" onclick="setCategoryTabFilter('readers-voice', this)">👥 Voice</button>
+            <button class="filter-btn" onclick="setCategoryTabFilter('ulasan-serat', this)">📜 Ulasan</button>
+          </div>
         </div>
-        <button class="btn btn-primary" onclick="createNewEntry()">➕ Tambah Renungan Baru</button>
+        <button class="btn btn-primary" onclick="createNewEntry()">➕ Tambah Tulisan Baru</button>
       </div>
 
       <div class="table-container">
@@ -439,8 +456,9 @@ HTML_ADMIN = """<!DOCTYPE html>
           <thead>
             <tr>
               <th class="sortable" onclick="handleSort('status')">Status <span id="sort-status" class="sort-icon">⇅</span></th>
+              <th class="sortable" onclick="handleSort('category')">Kategori <span id="sort-category" class="sort-icon">⇅</span></th>
               <th class="sortable" onclick="handleSort('date')">Tanggal <span id="sort-date" class="sort-icon">▼</span></th>
-              <th class="sortable" onclick="handleSort('title')">Judul Renungan <span id="sort-title" class="sort-icon">⇅</span></th>
+              <th class="sortable" onclick="handleSort('title')">Judul Tulisan / Penulis <span id="sort-title" class="sort-icon">⇅</span></th>
               <th class="sortable" onclick="handleSort('lang')">Bahasa <span id="sort-lang" class="sort-icon">⇅</span></th>
               <th class="sortable" onclick="handleSort('media')">Media <span id="sort-media" class="sort-icon">⇅</span></th>
               <th class="sortable" onclick="handleSort('gdoc')">Google Doc <span id="sort-gdoc" class="sort-icon">⇅</span></th>
@@ -448,7 +466,7 @@ HTML_ADMIN = """<!DOCTYPE html>
             </tr>
           </thead>
           <tbody id="tableBody">
-            <tr><td colspan="7" style="text-align:center; padding:30px;">Memuat data renungan...</td></tr>
+            <tr><td colspan="8" style="text-align:center; padding:30px;">Memuat data...</td></tr>
           </tbody>
         </table>
       </div>
@@ -456,18 +474,29 @@ HTML_ADMIN = """<!DOCTYPE html>
 
     <!-- PANEL EDITOR -->
     <div class="panel" id="panel-editor">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
           <button class="btn btn-secondary btn-sm" onclick="switchTab('list')">← Kembali</button>
           <span style="font-size:13px; color:var(--text-muted);">Berkas:</span>
           <strong id="currentFileLabel" style="font-family:'JetBrains Mono', monospace; color:var(--primary);">-</strong>
           
-          <span style="font-size:13px; color:var(--text-muted); margin-left:8px;">Status:</span>
+          <span style="font-size:13px; color:var(--text-muted); margin-left:4px;">Status:</span>
           <select id="editorStatusSelect" class="status-select status-published" onchange="updateEditorStatus(this.value)">
             <option value="published">🟢 Published</option>
             <option value="draft">🟡 Draft</option>
             <option value="unpublished">⚪ Unpublished</option>
           </select>
+
+          <span style="font-size:13px; color:var(--text-muted); margin-left:4px;">Kategori:</span>
+          <select id="editorCatSelect" class="status-select" style="background:#1e293b; border-color:#475569; color:#f8fafc;" onchange="updateEditorCategory(this.value)">
+            <option value="renungan-harian">🌅 Renungan Harian</option>
+            <option value="esai-kontemplasi">✍️ Esai Kontemplasi</option>
+            <option value="readers-voice">👥 Reader's Voice</option>
+            <option value="ulasan-serat">📜 Ulasan Serat</option>
+          </select>
+
+          <span style="font-size:13px; color:var(--text-muted); margin-left:4px;">Penulis:</span>
+          <input type="text" id="editorAuthorInput" placeholder="Nama Penulis..." style="padding:4px 10px; font-size:12px; border-radius:6px; background:#1e293b; border:1px solid #475569; color:#f8fafc; outline:none; width:150px;" oninput="updateEditorAuthor(this.value)">
         </div>
         <div style="display:flex; gap:8px;">
           <button class="btn btn-success" onclick="saveActiveFile()">💾 Simpan Naskah</button>
@@ -527,6 +556,7 @@ HTML_ADMIN = """<!DOCTYPE html>
     let renunganList = [];
     let currentActiveFile = '';
     let currentStatusFilter = 'all';
+    let currentCatFilter = 'all';
     let sortKey = 'date';
     let sortAsc = false; // Default: terbaru ke lama
 
@@ -562,7 +592,14 @@ HTML_ADMIN = """<!DOCTYPE html>
 
     function setStatusFilter(status, btn) {
       currentStatusFilter = status;
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('button[onclick^="setStatusFilter"]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTable();
+    }
+
+    function setCategoryTabFilter(cat, btn) {
+      currentCatFilter = cat;
+      document.querySelectorAll('button[onclick^="setCategoryTabFilter"]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       renderTable();
     }
@@ -579,7 +616,7 @@ HTML_ADMIN = """<!DOCTYPE html>
     }
 
     function updateSortIcons() {
-      ['status', 'date', 'title', 'lang', 'media', 'gdoc'].forEach(k => {
+      ['status', 'category', 'date', 'title', 'lang', 'media', 'gdoc'].forEach(k => {
         const icon = document.getElementById(`sort-${k}`);
         const th = icon ? icon.closest('th') : null;
         if (!icon || !th) return;
@@ -615,9 +652,10 @@ HTML_ADMIN = """<!DOCTYPE html>
       tbody.innerHTML = '';
 
       let filtered = renunganList.filter(f => {
-        const matchesQuery = !q || f.title.toLowerCase().includes(q) || f.date.includes(q) || f.fname.toLowerCase().includes(q);
+        const matchesQuery = !q || f.title.toLowerCase().includes(q) || f.date.includes(q) || f.fname.toLowerCase().includes(q) || (f.author && f.author.toLowerCase().includes(q));
         const matchesStatus = currentStatusFilter === 'all' || f.status === currentStatusFilter;
-        return matchesQuery && matchesStatus;
+        const matchesCategory = currentCatFilter === 'all' || f.category === currentCatFilter;
+        return matchesQuery && matchesStatus && matchesCategory;
       });
 
       // Sorting
@@ -629,6 +667,9 @@ HTML_ADMIN = """<!DOCTYPE html>
         } else if (sortKey === 'status') {
           valA = a.status || '';
           valB = b.status || '';
+        } else if (sortKey === 'category') {
+          valA = a.category || '';
+          valB = b.category || '';
         } else if (sortKey === 'title') {
           valA = a.title || '';
           valB = b.title || '';
@@ -651,9 +692,16 @@ HTML_ADMIN = """<!DOCTYPE html>
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">Tidak ada renungan yang cocok dengan filter.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color:var(--text-muted);">Tidak ada tulisan yang cocok dengan filter.</td></tr>';
         return;
       }
+
+      const catBadges = {
+        'renungan-harian': '<span class="badge-cat-admin cat-admin-renungan">🌅 Renungan</span>',
+        'esai-kontemplasi': '<span class="badge-cat-admin cat-admin-esai">✍️ Esai</span>',
+        'readers-voice': '<span class="badge-cat-admin cat-admin-readers">👥 Voice</span>',
+        'ulasan-serat': '<span class="badge-cat-admin cat-admin-ulasan">📜 Ulasan</span>'
+      };
 
       filtered.forEach(f => {
         const tr = document.createElement('tr');
@@ -663,6 +711,8 @@ HTML_ADMIN = """<!DOCTYPE html>
         const gdocLink = f.gdoc ? `<a href="${f.gdoc}" target="_blank" style="color:var(--primary); text-decoration:none;">Buka GDoc ↗</a>` : '-';
 
         const statusClass = f.status === 'published' ? 'status-published' : (f.status === 'draft' ? 'status-draft' : 'status-unpublished');
+        const catBadge = catBadges[f.category] || '<span class="badge-cat-admin cat-admin-renungan">🌅 Renungan</span>';
+        const authorHtml = f.author ? `<div style="font-size:11.5px; color:#38bdf8; font-weight:600; margin-top:2px;">✍️ ${f.author}</div>` : '';
 
         tr.innerHTML = `
           <td>
@@ -672,13 +722,18 @@ HTML_ADMIN = """<!DOCTYPE html>
               <option value="unpublished" ${f.status === 'unpublished' ? 'selected' : ''}>⚪ Unpublished</option>
             </select>
           </td>
+          <td>${catBadge}</td>
           <td style="font-weight:700; white-space:nowrap;">${f.date}</td>
-          <td><strong>${f.title}</strong><div style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono', monospace;">${f.fname}</div></td>
+          <td>
+            <strong>${f.title}</strong>
+            ${authorHtml}
+            <div style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono', monospace; margin-top:2px;">${f.fname}</div>
+          </td>
           <td>${langBadge}</td>
           <td>${posterBadge} ${audioBadge}</td>
           <td>${gdocLink}</td>
           <td>
-            <button class="btn btn-secondary btn-sm" onclick="openEditor('${f.fname}', '${f.status}')">✏️ Edit</button>
+            <button class="btn btn-secondary btn-sm" onclick="openEditor('${f.fname}', '${f.status}', '${f.category || 'renungan-harian'}', '${f.author || ''}')">✏️ Edit</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -709,13 +764,19 @@ HTML_ADMIN = """<!DOCTYPE html>
       renderTable();
     }
 
-    function openEditor(fname, status) {
+    function openEditor(fname, status, category, author) {
       currentActiveFile = fname;
       document.getElementById('currentFileLabel').innerText = fname;
       
       const sel = document.getElementById('editorStatusSelect');
       sel.value = status || 'published';
       sel.className = 'status-select ' + (sel.value === 'published' ? 'status-published' : (sel.value === 'draft' ? 'status-draft' : 'status-unpublished'));
+
+      const catSel = document.getElementById('editorCatSelect');
+      catSel.value = category || 'renungan-harian';
+
+      const authInp = document.getElementById('editorAuthorInput');
+      authInp.value = author || '';
 
       fetch(`/api/get?file=${encodeURIComponent(fname)}`)
         .then(r => r.json())
@@ -742,6 +803,35 @@ HTML_ADMIN = """<!DOCTYPE html>
       }
       document.getElementById('codeEditor').value = raw;
       showToast('Status diset ke ' + newStatus + ' (klik Simpan Naskah)');
+    }
+
+    function updateEditorCategory(newCat) {
+      let raw = document.getElementById('codeEditor').value;
+      if (raw.startsWith('---')) {
+        if (/^category:\s*.*$/m.test(raw)) {
+          raw = raw.replace(/^category:\s*.*$/m, 'category: ' + newCat);
+        } else {
+          raw = raw.replace(/^---/, '---\\ncategory: ' + newCat);
+        }
+      } else {
+        raw = '---\\ncategory: ' + newCat + '\\n---\\n\\n' + raw;
+      }
+      document.getElementById('codeEditor').value = raw;
+      showToast('Kategori diset ke ' + newCat + ' (klik Simpan Naskah)');
+    }
+
+    function updateEditorAuthor(newAuthor) {
+      let raw = document.getElementById('codeEditor').value;
+      if (raw.startsWith('---')) {
+        if (/^author:\s*.*$/m.test(raw)) {
+          raw = raw.replace(/^author:\s*.*$/m, 'author: "' + newAuthor + '"');
+        } else {
+          raw = raw.replace(/^---/, '---\\nauthor: "' + newAuthor + '"');
+        }
+      } else {
+        raw = '---\\nauthor: "' + newAuthor + '"\\n---\\n\\n' + raw;
+      }
+      document.getElementById('codeEditor').value = raw;
     }
 
     function updatePreview() {
@@ -778,36 +868,49 @@ HTML_ADMIN = """<!DOCTYPE html>
     }
 
     function createNewEntry() {
-      const date = prompt('Masukkan Tanggal Renungan (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+      const catChoice = prompt('Pilih Kategori Tulisan:\n1 = 🌅 Renungan Harian\n2 = ✍️ Esai Kontemplasi\n3 = 👥 Reader’s Voice (Kiriman Pembaca)\n4 = 📜 Ulasan Serat', '1');
+      if (!catChoice) return;
+      
+      let cat = 'renungan-harian';
+      let catPrefix = 'renungan';
+      if (catChoice === '2') { cat = 'esai-kontemplasi'; catPrefix = 'esai'; }
+      else if (catChoice === '3') { cat = 'readers-voice'; catPrefix = 'suara-pembaca'; }
+      else if (catChoice === '4') { cat = 'ulasan-serat'; catPrefix = 'ulasan'; }
+
+      const date = prompt('Masukkan Tanggal (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
       if (!date) return;
-      const topic = prompt('Masukkan Topik (contoh: sabar, narima, eling):', 'kontemplasi');
+      const topic = prompt('Masukkan Topik / Sesirah Singkat (contoh: rila, sumeleh, eling):', 'kontemplasi');
       if (!topic) return;
-      const fname = `renungan-${topic.toLowerCase().replace(/\\s+/g, '-')}-ind-${date}.md`;
+      const author = prompt('Nama Penulis (kosongkan jika anonim / tim):', (cat === 'readers-voice' ? 'Nama Pembaca' : 'Satya Adi Dharma'));
+
+      const fname = `${catPrefix}-${topic.toLowerCase().replace(/\\s+/g, '-')}-ind-${date}.md`;
       const template = `---
-title: "Sesirah Renungan ${date}"
+title: "Sesirah Tulisan ${date}"
 date: ${date}
 status: draft
-tags: ['renungan', 'bahasa-indonesia', 'sang-guru-sejati']
+category: ${cat}
+author: "${author || ''}"
+tags: ['kontemplasi', 'bahasa-indonesia', 'sang-guru-sejati']
 language: id
 ---
 
-# Sesirah Renungan ${date}
+# Sesirah Tulisan ${date}
 
 *${date}*
 
 *RENUNGAN PENYISWAAN*
 
-*Sesirah Renungan*
+*Sesirah Tulisan*
 
 _Sugeng Enjang, Salam Karahayon_
 
 *📖 SABDA HARI INI :*
 
-Sasangka Jati : _"Tulis sabda murni ing mriki..."_
+Sasangka Jati : _"Tulis kutipan sabda suci ing mriki..."_
 
 💭 *URAIAN* :
 
-Tulis ulasan lan panyuraos batin ing mriki...
+Tulis wedharan, panyuraos, utawi esai kontemplasi kanthi cetha lan runtut ing mriki...
 
 🙏 *PRAKTIK* :
 
@@ -817,10 +920,13 @@ Tulis ulasan lan panyuraos batin ing mriki...
 
 📝 *APLIKASI* :
 
-1. Pitakenan kapisan?
+1. Pitakenan panyuraos kapisan?
 `;
       currentActiveFile = fname;
       document.getElementById('currentFileLabel').innerText = fname;
+      document.getElementById('editorStatusSelect').value = 'draft';
+      document.getElementById('editorCatSelect').value = cat;
+      document.getElementById('editorAuthorInput').value = author || '';
       document.getElementById('codeEditor').value = template;
       updatePreview();
       switchTab('editor');
@@ -956,6 +1062,37 @@ class AdminHandler(BaseHTTPRequestHandler):
             elif "-eng" in fname:
                 lang = "en"
 
+            # Category
+            cat = "renungan-harian"
+            m_cat = re.search(r'^category:\s*([a-zA-Z0-9_-]+)', raw, re.MULTILINE | re.IGNORECASE)
+            if m_cat:
+                cat = m_cat.group(1).lower().strip()
+            elif "ulasan" in fname.lower():
+                cat = "ulasan-serat"
+            elif "esai" in fname.lower():
+                cat = "esai-kontemplasi"
+            elif "suara" in fname.lower() or "voice" in fname.lower():
+                cat = "readers-voice"
+
+            cat_map = {
+                "renungan": "renungan-harian",
+                "renungan-harian": "renungan-harian",
+                "esai": "esai-kontemplasi",
+                "esai-kontemplasi": "esai-kontemplasi",
+                "readers-voice": "readers-voice",
+                "reader-voice": "readers-voice",
+                "suara-pembaca": "readers-voice",
+                "ulasan": "ulasan-serat",
+                "ulasan-serat": "ulasan-serat"
+            }
+            cat = cat_map.get(cat, "renungan-harian")
+
+            # Author
+            author = ""
+            m_auth = re.search(r'^author:\s*([^\n\r]+)', raw, re.MULTILINE | re.IGNORECASE)
+            if m_auth:
+                author = m_auth.group(1).replace('"', '').replace("'", '').strip()
+
             stem = fname.replace("renungan-", "").replace(".md", "")
             core_topic = re.sub(r'-\d{4}-\d{2}-\d{2}', '', stem)
             core_topic = re.sub(r'-\d+-agustus-\d{4}', '', core_topic)
@@ -982,6 +1119,8 @@ class AdminHandler(BaseHTTPRequestHandler):
                 "title": title.replace("*", "").replace("#", "").strip(),
                 "lang": lang,
                 "status": status,
+                "category": cat,
+                "author": author,
                 "has_poster": has_poster,
                 "has_audio": has_audio,
                 "gdoc": gdoc

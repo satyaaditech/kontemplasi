@@ -173,6 +173,37 @@ def build_clean_pustaka():
         if m_st:
             status = m_st.group(1).lower().strip()
 
+        # Extract category
+        cat = "renungan-harian"
+        m_cat = re.search(r'^category:\s*([a-zA-Z0-9_-]+)', raw, re.MULTILINE | re.IGNORECASE)
+        if m_cat:
+            cat = m_cat.group(1).lower().strip()
+        elif "ulasan" in fname.lower() or "ulasan" in core_topic.lower():
+            cat = "ulasan-serat"
+        elif "esai" in fname.lower() or "esai" in core_topic.lower():
+            cat = "esai-kontemplasi"
+        elif "suara" in fname.lower() or "voice" in fname.lower():
+            cat = "readers-voice"
+
+        cat_map = {
+            "renungan": "renungan-harian",
+            "renungan-harian": "renungan-harian",
+            "esai": "esai-kontemplasi",
+            "esai-kontemplasi": "esai-kontemplasi",
+            "readers-voice": "readers-voice",
+            "reader-voice": "readers-voice",
+            "suara-pembaca": "readers-voice",
+            "ulasan": "ulasan-serat",
+            "ulasan-serat": "ulasan-serat"
+        }
+        cat = cat_map.get(cat, "renungan-harian")
+
+        # Extract author
+        author = ""
+        m_auth = re.search(r'^author:\s*([^\n\r]+)', raw, re.MULTILINE | re.IGNORECASE)
+        if m_auth:
+            author = m_auth.group(1).replace('"', '').replace("'", '').strip()
+
         parsed_files.append({
             "fname": fname,
             "date_iso": date_iso,
@@ -189,6 +220,8 @@ def build_clean_pustaka():
             "poster": poster_file,
             "excerpt": sabda_excerpt,
             "status": status,
+            "category": cat,
+            "author": author,
             "raw": raw
         })
 
@@ -242,6 +275,8 @@ def build_clean_pustaka():
             "audio": audio,
             "gdoc": gdoc,
             "primary_lang": primary["lang"],
+            "category": primary.get("category", "renungan-harian"),
+            "author": primary.get("author", ""),
             "available_langs": available_langs,
             "versions": versions_payload
         })
@@ -455,6 +490,59 @@ def build_clean_pustaka():
       font-size: 18px;
       pointer-events: none;
     }}
+
+    /* CATEGORY NAV */
+    .category-nav {{
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin: 0 auto 24px;
+      max-width: 850px;
+    }}
+
+    .cat-pill {{
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13.5px;
+      font-weight: 600;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: var(--shadow-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }}
+
+    .cat-pill:hover {{
+      border-color: var(--primary);
+      color: var(--primary);
+      transform: translateY(-1px);
+    }}
+
+    .cat-pill.active {{
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(30, 58, 138, 0.2);
+    }}
+
+    .badge-cat {{
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }}
+    .cat-renungan {{ background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }}
+    .cat-esai {{ background: #fdf4ff; color: #86198f; border: 1px solid #f5d0fe; }}
+    .cat-readers {{ background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }}
+    .cat-ulasan {{ background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }}
 
     /* FILTERS */
     .filter-bar {{
@@ -955,6 +1043,15 @@ def build_clean_pustaka():
         <span class="search-icon">🔍</span>
         <input type="text" id="searchInput" class="search-input" placeholder="Tulis tema, sabda, utawi tembung kunci (contoh: teladan, sabar, rila, mengampuni)..." oninput="filterArticles()">
       </div>
+
+      <!-- CATEGORY NAV -->
+      <div class="category-nav">
+        <button class="cat-pill active" data-cat="all" onclick="setCategoryFilter('all', this)">✨ Semua Materi</button>
+        <button class="cat-pill" data-cat="renungan-harian" onclick="setCategoryFilter('renungan-harian', this)">🌅 Renungan Harian</button>
+        <button class="cat-pill" data-cat="esai-kontemplasi" onclick="setCategoryFilter('esai-kontemplasi', this)">✍️ Esai Kontemplasi</button>
+        <button class="cat-pill" data-cat="readers-voice" onclick="setCategoryFilter('readers-voice', this)">👥 Reader’s Voice</button>
+        <button class="cat-pill" data-cat="ulasan-serat" onclick="setCategoryFilter('ulasan-serat', this)">📜 Ulasan Serat</button>
+      </div>
     </section>
 
     <!-- FILTER BAR -->
@@ -1033,15 +1130,24 @@ def build_clean_pustaka():
 
     let currentLang = 'all';
     let currentTopic = 'all';
+    let currentCategory = 'all';
     let currentSearch = '';
     let activeArticle = null;
     let currentActiveLang = 'id';
+
+    function setCategoryFilter(cat, btn) {{
+      currentCategory = cat;
+      document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderArticles();
+    }}
 
     function renderArticles() {{
       const grid = document.getElementById('articlesGrid');
       grid.innerHTML = '';
 
       const filtered = articlesData.filter(a => {{
+        const matchCategory = (currentCategory === 'all' || a.category === currentCategory);
         const matchLang = (currentLang === 'all' || a.available_langs.includes(currentLang));
         const matchTopic = (currentTopic === 'all' || a.tags.includes(currentTopic) || a.book.includes(currentTopic));
         const q = currentSearch.toLowerCase().trim();
@@ -1055,7 +1161,7 @@ def build_clean_pustaka():
             }}
           }}
         }}
-        return matchLang && matchTopic && matchSearch;
+        return matchCategory && matchLang && matchTopic && matchSearch;
       }});
 
       if (filtered.length === 0) {{
@@ -1082,6 +1188,16 @@ def build_clean_pustaka():
         const gdocIcon = a.gdoc ? '📄' : '';
         const posterBadge = a.poster ? `<span class="poster-pill">🖼️ Poster</span>` : '';
 
+        const catLabels = {{
+          'renungan-harian': '🌅 Renungan',
+          'esai-kontemplasi': '✍️ Esai',
+          'readers-voice': '👥 Voice',
+          'ulasan-serat': '📜 Ulasan'
+        }};
+        const catClass = a.category === 'esai-kontemplasi' ? 'cat-esai' : (a.category === 'readers-voice' ? 'cat-readers' : (a.category === 'ulasan-serat' ? 'cat-ulasan' : 'cat-renungan'));
+        const catBadge = `<span class="badge-cat ${{catClass}}">${{catLabels[a.category] || '🌅 Renungan'}}</span>`;
+        const authorHtml = a.author ? `<div style="font-size:11.5px; color:var(--text-muted); margin-bottom:6px; font-weight:600;">✍️ Oleh: ${{a.author}}</div>` : '';
+
         const tagsHtml = a.tags.map(t => `<span class="mini-tag">${{t.replace(/[*#_~`]/g, '').trim()}}</span>`).join('');
 
         const cleanTitle = a.title.replace(/[*#_~`]/g, '').trim();
@@ -1093,23 +1209,25 @@ def build_clean_pustaka():
           <div class="card-meta">
             <span class="card-date">${{cleanDate}}</span>
             <div style="display:flex; gap:6px; align-items:center;">
+              ${{catBadge}}
               ${{posterBadge}}
               <div class="lang-pills">${{langPillsHtml}}</div>
             </div>
           </div>
           <h3 class="card-title">${{cleanTitle}}</h3>
+          ${{authorHtml}}
           <div class="card-book">📖 ${{cleanBook}}</div>
           <div class="card-excerpt">"${{cleanExcerpt || 'Klik kagem maos wedharan jangkep...'}}"</div>
           <div class="card-footer">
             <div class="card-tags">${{tagsHtml}}</div>
-            <div class="card-features">${{audioIcon}} ${{gdocIcon}}</div>
+            <div class="card-features">
+              ${{audioIcon}} ${{gdocIcon}}
+            </div>
           </div>
         `;
         grid.appendChild(card);
       }});
     }}
-
-    function openReader(article, preferredLang) {{
       activeArticle = article;
       const modal = document.getElementById('readerModal');
       const langSwitcher = document.getElementById('modalLangSwitcher');
@@ -1159,10 +1277,19 @@ def build_clean_pustaka():
       const dateEl = document.getElementById('modalDate');
       const gdocBtn = document.getElementById('modalGDocBtn');
       const audioContainer = document.getElementById('modalAudioContainer');
-      const audioPlayer = document.getElementById('modalAudioPlayer');
+      const audioPlayer = document.getElementById('modalAudio');
+      const posterBtn = document.getElementById('modalPosterBtn');
 
-      dateEl.innerText = v.date || activeArticle.date;
-
+      const catLabels = {{
+        'renungan-harian': '🌅 Renungan Harian',
+        'esai-kontemplasi': '✍️ Esai Kontemplasi',
+        'readers-voice': '👥 Reader’s Voice',
+        'ulasan-serat': '📜 Ulasan Serat'
+      }};
+      const catClass = activeArticle.category === 'esai-kontemplasi' ? 'cat-esai' : (activeArticle.category === 'readers-voice' ? 'cat-readers' : (activeArticle.category === 'ulasan-serat' ? 'cat-ulasan' : 'cat-renungan'));
+      const catBadge = `<span class="badge-cat ${{catClass}}">${{catLabels[activeArticle.category] || '🌅 Renungan'}}</span>`;
+      const authorBadge = activeArticle.author ? ` • ✍️ ${{activeArticle.author}}` : '';
+      dateEl.innerHTML = `${{catBadge}} <span style="margin-left:6px;">${{v.date || activeArticle.date_iso}}</span>${{authorBadge}}`;
       const gdocLink = v.gdoc || activeArticle.gdoc;
       if (gdocLink) {{
         gdocBtn.href = gdocLink;
