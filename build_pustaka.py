@@ -167,6 +167,12 @@ def build_clean_pustaka():
             if kw in raw.lower() and tag not in tags:
                 tags.append(tag)
 
+        # Extract status (published/draft/unpublished)
+        status = "published"
+        m_st = re.search(r'^status:\s*([a-zA-Z0-9_-]+)', raw, re.MULTILINE | re.IGNORECASE)
+        if m_st:
+            status = m_st.group(1).lower().strip()
+
         parsed_files.append({
             "fname": fname,
             "date_iso": date_iso,
@@ -182,12 +188,15 @@ def build_clean_pustaka():
             "audio": audio_file,
             "poster": poster_file,
             "excerpt": sabda_excerpt,
+            "status": status,
             "raw": raw
         })
 
     # Group into deduplicated entries
     groups = {}
     for pf in parsed_files:
+        if pf.get("status") in ["draft", "unpublished"]:
+            continue
         gid = pf["group_id"]
         if gid not in groups:
             groups[gid] = []

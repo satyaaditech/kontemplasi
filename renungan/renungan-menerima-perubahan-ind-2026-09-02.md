@@ -1,12 +1,3 @@
----
-title: "Menerima Perubahan: Menyelaraskan Laku Hidup dengan Karsa Sang Guru Sejati 🔄🌊✨"
-date: 2026-09-02
-tags: ['renungan', 'bahasa-indonesia', 'sabda-khusus', 'karsa', 'perubahan', 'panembah']
-language: id
----
-
-# Menerima Perubahan: Menyelaraskan Laku Hidup dengan Karsa Sang Guru Sejati 🔄🌊✨
-
 *RABU, 2 SEPTEMBER 2026*
 
 *RENUNGAN PENYISWAAN*

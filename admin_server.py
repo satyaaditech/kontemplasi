@@ -37,6 +37,7 @@ HTML_ADMIN = """<!DOCTYPE html>
       --accent-green: #10b981;
       --accent-gold: #f59e0b;
       --accent-red: #ef4444;
+      --accent-gray: #64748b;
       --radius: 10px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -105,18 +106,18 @@ HTML_ADMIN = """<!DOCTYPE html>
 
     .stats-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
       margin-bottom: 24px;
     }
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: var(--radius);
-      padding: 16px 20px;
+      padding: 14px 18px;
     }
-    .stat-val { font-size: 24px; font-weight: 800; color: var(--text); margin-top: 4px; }
-    .stat-lbl { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+    .stat-val { font-size: 22px; font-weight: 800; color: var(--text); margin-top: 2px; }
+    .stat-lbl { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 
     .tabs {
       display: flex;
@@ -168,6 +169,37 @@ HTML_ADMIN = """<!DOCTYPE html>
     .badge-en { background: #3730a3; color: white; }
     .badge-poster { background: #065f46; color: #a7f3d0; }
     .badge-audio { background: #1e3a8a; color: #bfdbfe; }
+
+    /* STATUS SELECTOR */
+    .status-select {
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      outline: none;
+      cursor: pointer;
+    }
+    .status-published { background: #064e3b; color: #6ee7b7; border-color: #047857; }
+    .status-draft { background: #78350f; color: #fde68a; border-color: #b45309; }
+    .status-unpublished { background: #334155; color: #cbd5e1; border-color: #475569; }
+
+    /* FILTER BUTTONS */
+    .filter-btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--text-muted);
+    }
+    .filter-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
 
     /* EDITOR */
     .editor-layout {
@@ -253,6 +285,23 @@ HTML_ADMIN = """<!DOCTYPE html>
     .pin-input:focus { border-color: var(--primary); }
 
     /* TOAST & LOG MODAL */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #10b981;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 100;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+      display: none;
+      animation: fadeIn 0.2s;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
     .log-modal {
       position: fixed;
       inset: 0;
@@ -286,6 +335,9 @@ HTML_ADMIN = """<!DOCTYPE html>
 </head>
 <body>
 
+  <!-- TOAST -->
+  <div id="toast" class="toast">Status berhasil diperbarui!</div>
+
   <!-- PIN PROMPT OVERLAY -->
   <div class="pin-overlay" id="pinOverlay">
     <div class="pin-box">
@@ -312,20 +364,24 @@ HTML_ADMIN = """<!DOCTYPE html>
   <main class="main">
     <div class="stats-row">
       <div class="stat-card">
-        <div class="stat-lbl">Total Materi Unik</div>
-        <div class="stat-val" id="statUnique">-</div>
+        <div class="stat-lbl">🟢 Published (Live)</div>
+        <div class="stat-val" id="statPub" style="color:#6ee7b7;">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">🟡 Draft</div>
+        <div class="stat-val" id="statDraft" style="color:#fde68a;">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">⚪ Unpublished</div>
+        <div class="stat-val" id="statUnpub" style="color:#cbd5e1;">-</div>
       </div>
       <div class="stat-card">
         <div class="stat-lbl">Total Berkas Naskah</div>
         <div class="stat-val" id="statFiles">-</div>
       </div>
       <div class="stat-card">
-        <div class="stat-lbl">Poster Infografis</div>
-        <div class="stat-val" id="statPosters">-</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-lbl">Rekaman Audio</div>
-        <div class="stat-val" id="statAudios">-</div>
+        <div class="stat-lbl">Poster & Audio</div>
+        <div class="stat-val" id="statMedia">-</div>
       </div>
     </div>
 
@@ -339,7 +395,15 @@ HTML_ADMIN = """<!DOCTYPE html>
     <!-- PANEL LIST -->
     <div class="panel active" id="panel-list">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap;">
-        <input type="text" id="searchTable" placeholder="🔍 Cari renungan..." style="padding:8px 14px; border-radius:8px; background:var(--surface); border:1px solid var(--surface-border); color:var(--text); width:320px; outline:none;" oninput="filterTable()">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <input type="text" id="searchTable" placeholder="🔍 Cari renungan..." style="padding:8px 14px; border-radius:8px; background:var(--surface); border:1px solid var(--surface-border); color:var(--text); width:260px; outline:none;" oninput="filterTable()">
+          <div style="display:flex; gap:4px;">
+            <button class="filter-btn active" onclick="setStatusFilter('all', this)">Semua</button>
+            <button class="filter-btn" onclick="setStatusFilter('published', this)">🟢 Published</button>
+            <button class="filter-btn" onclick="setStatusFilter('draft', this)">🟡 Draft</button>
+            <button class="filter-btn" onclick="setStatusFilter('unpublished', this)">⚪ Unpublished</button>
+          </div>
+        </div>
         <button class="btn btn-primary" onclick="createNewEntry()">➕ Tambah Renungan Baru</button>
       </div>
 
@@ -347,6 +411,7 @@ HTML_ADMIN = """<!DOCTYPE html>
         <table>
           <thead>
             <tr>
+              <th>Status</th>
               <th>Tanggal</th>
               <th>Judul Renungan</th>
               <th>Bahasa</th>
@@ -356,7 +421,7 @@ HTML_ADMIN = """<!DOCTYPE html>
             </tr>
           </thead>
           <tbody id="tableBody">
-            <tr><td colspan="6" style="text-align:center; padding:30px;">Memuat data renungan...</td></tr>
+            <tr><td colspan="7" style="text-align:center; padding:30px;">Memuat data renungan...</td></tr>
           </tbody>
         </table>
       </div>
@@ -365,12 +430,19 @@ HTML_ADMIN = """<!DOCTYPE html>
     <!-- PANEL EDITOR -->
     <div class="panel" id="panel-editor">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span style="font-size:13px; color:var(--text-muted);">Berkas aktif:</span>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <button class="btn btn-secondary btn-sm" onclick="switchTab('list')">← Kembali</button>
+          <span style="font-size:13px; color:var(--text-muted);">Berkas:</span>
           <strong id="currentFileLabel" style="font-family:'JetBrains Mono', monospace; color:var(--primary);">-</strong>
+          
+          <span style="font-size:13px; color:var(--text-muted); margin-left:8px;">Status:</span>
+          <select id="editorStatusSelect" class="status-select status-published" onchange="updateEditorStatus(this.value)">
+            <option value="published">🟢 Published</option>
+            <option value="draft">🟡 Draft</option>
+            <option value="unpublished">⚪ Unpublished</option>
+          </select>
         </div>
         <div style="display:flex; gap:8px;">
-          <button class="btn btn-secondary" onclick="switchTab('list')">Kembali</button>
           <button class="btn btn-success" onclick="saveActiveFile()">💾 Simpan Naskah</button>
         </div>
       </div>
@@ -427,6 +499,14 @@ HTML_ADMIN = """<!DOCTYPE html>
   <script>
     let renunganList = [];
     let currentActiveFile = '';
+    let currentStatusFilter = 'all';
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2500);
+    }
 
     function checkPin() {
       const pin = document.getElementById('pinInput').value;
@@ -451,15 +531,23 @@ HTML_ADMIN = """<!DOCTYPE html>
       document.getElementById(`panel-${tabId}`).classList.add('active');
     }
 
+    function setStatusFilter(status, btn) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTable();
+    }
+
     function loadData() {
       fetch('/api/list')
         .then(r => r.json())
         .then(data => {
           renunganList = data.files;
-          document.getElementById('statUnique').innerText = data.stats.unique_count;
+          document.getElementById('statPub').innerText = data.stats.published_count;
+          document.getElementById('statDraft').innerText = data.stats.draft_count;
+          document.getElementById('statUnpub').innerText = data.stats.unpublished_count;
           document.getElementById('statFiles').innerText = data.stats.total_files;
-          document.getElementById('statPosters').innerText = data.stats.poster_count;
-          document.getElementById('statAudios').innerText = data.stats.audio_count;
+          document.getElementById('statMedia').innerText = `${data.stats.poster_count} poster / ${data.stats.audio_count} audio`;
           renderTable();
         });
     }
@@ -470,11 +558,13 @@ HTML_ADMIN = """<!DOCTYPE html>
       tbody.innerHTML = '';
 
       const filtered = renunganList.filter(f => {
-        return !q || f.title.toLowerCase().includes(q) || f.date.includes(q) || f.fname.toLowerCase().includes(q);
+        const matchesQuery = !q || f.title.toLowerCase().includes(q) || f.date.includes(q) || f.fname.toLowerCase().includes(q);
+        const matchesStatus = currentStatusFilter === 'all' || f.status === currentStatusFilter;
+        return matchesQuery && matchesStatus;
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">Tidak ada renungan yang cocok.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">Tidak ada renungan yang cocok dengan filter.</td></tr>';
         return;
       }
 
@@ -485,17 +575,46 @@ HTML_ADMIN = """<!DOCTYPE html>
         const audioBadge = f.has_audio ? '<span class="badge badge-audio">Audio</span>' : '-';
         const gdocLink = f.gdoc ? `<a href="${f.gdoc}" target="_blank" style="color:var(--primary); text-decoration:none;">Buka GDoc ↗</a>` : '-';
 
+        const statusClass = f.status === 'published' ? 'status-published' : (f.status === 'draft' ? 'status-draft' : 'status-unpublished');
+
         tr.innerHTML = `
+          <td>
+            <select class="status-select ${statusClass}" onchange="changeStatus('${f.fname}', this.value, this)">
+              <option value="published" ${f.status === 'published' ? 'selected' : ''}>🟢 Published</option>
+              <option value="draft" ${f.status === 'draft' ? 'selected' : ''}>🟡 Draft</option>
+              <option value="unpublished" ${f.status === 'unpublished' ? 'selected' : ''}>⚪ Unpublished</option>
+            </select>
+          </td>
           <td style="font-weight:700; white-space:nowrap;">${f.date}</td>
           <td><strong>${f.title}</strong><div style="font-size:11px; color:var(--text-muted); font-family:'JetBrains Mono', monospace;">${f.fname}</div></td>
           <td>${langBadge}</td>
           <td>${posterBadge} ${audioBadge}</td>
           <td>${gdocLink}</td>
           <td>
-            <button class="btn btn-secondary btn-sm" onclick="openEditor('${f.fname}')">✏️ Edit</button>
+            <button class="btn btn-secondary btn-sm" onclick="openEditor('${f.fname}', '${f.status}')">✏️ Edit</button>
           </td>
         `;
         tbody.appendChild(tr);
+      });
+    }
+
+    function changeStatus(fname, newStatus, selectElem) {
+      fetch('/api/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file: fname, status: newStatus })
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (d.status === 'ok') {
+          showToast(`Status ${fname} diganti: ${newStatus}`);
+          if (selectElem) {
+            selectElem.className = 'status-select ' + (newStatus === 'published' ? 'status-published' : (newStatus === 'draft' ? 'status-draft' : 'status-unpublished'));
+          }
+          loadData();
+        } else {
+          alert('Gagal ngganti status: ' + d.error);
+        }
       });
     }
 
@@ -503,9 +622,14 @@ HTML_ADMIN = """<!DOCTYPE html>
       renderTable();
     }
 
-    function openEditor(fname) {
+    function openEditor(fname, status) {
       currentActiveFile = fname;
       document.getElementById('currentFileLabel').innerText = fname;
+      
+      const sel = document.getElementById('editorStatusSelect');
+      sel.value = status || 'published';
+      sel.className = 'status-select ' + (sel.value === 'published' ? 'status-published' : (sel.value === 'draft' ? 'status-draft' : 'status-unpublished'));
+
       fetch(`/api/get?file=${encodeURIComponent(fname)}`)
         .then(r => r.json())
         .then(d => {
@@ -513,6 +637,25 @@ HTML_ADMIN = """<!DOCTYPE html>
           updatePreview();
           switchTab('editor');
         });
+    }
+
+    function updateEditorStatus(newStatus) {
+      const sel = document.getElementById('editorStatusSelect');
+      sel.className = 'status-select ' + (newStatus === 'published' ? 'status-published' : (newStatus === 'draft' ? 'status-draft' : 'status-unpublished'));
+      
+      // Update frontmatter in editor textarea
+      let raw = document.getElementById('codeEditor').value;
+      if (raw.startsWith('---')) {
+        if (raw.includes('status:')) {
+          raw = raw.replace(/^status:\s*.*$/m, `status: ${newStatus}`);
+        } else {
+          raw = raw.replace(/^---/, `---\\nstatus: ${newStatus}`);
+        }
+      } else {
+        raw = `---\\nstatus: ${newStatus}\\n---\\n\\n` + raw;
+      }
+      document.getElementById('codeEditor').value = raw;
+      showToast(`Status diset ke ${newStatus} (klik Simpan Naskah)`);
     }
 
     function updatePreview() {
@@ -540,7 +683,7 @@ HTML_ADMIN = """<!DOCTYPE html>
       .then(r => r.json())
       .then(d => {
         if (d.status === 'ok') {
-          alert('Naskah kasil kasimpen wonten ing server!');
+          showToast('Naskah kasil kasimpen wonten ing server!');
           loadData();
         } else {
           alert('Gagal nyimpen naskah: ' + d.error);
@@ -557,6 +700,7 @@ HTML_ADMIN = """<!DOCTYPE html>
       const template = `---
 title: "Sesirah Renungan ${date}"
 date: ${date}
+status: draft
 tags: ['renungan', 'bahasa-indonesia', 'sang-guru-sejati']
 language: id
 ---
@@ -613,7 +757,7 @@ Tulis ulasan lan panyuraos batin ing mriki...
       .then(r => r.json())
       .then(d => {
         if (d.status === 'ok') {
-          alert('Berkas kasil kaunggah: ' + d.filename);
+          showToast('Berkas kasil kaunggah: ' + d.filename);
           document.getElementById('fileInput').value = '';
           document.getElementById('selectedFileName').innerText = 'Belum ada berkas dipilih';
           loadData();
@@ -667,6 +811,8 @@ class AdminHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/api/save":
             self.handle_api_save()
+        elif parsed.path == "/api/status":
+            self.handle_api_status()
         elif parsed.path == "/api/upload":
             self.handle_api_upload()
         elif parsed.path == "/api/deploy":
@@ -680,7 +826,9 @@ class AdminHandler(BaseHTTPRequestHandler):
         files_data = []
         posters = set()
         audios = set()
-        unique_groups = set()
+        pub_count = 0
+        draft_count = 0
+        unpub_count = 0
 
         for f in md_files:
             fname = os.path.basename(f)
@@ -689,6 +837,20 @@ class AdminHandler(BaseHTTPRequestHandler):
 
             m_date = re.search(r'(\d{4}-\d{2}-\d{2})', fname)
             date_iso = m_date.group(1) if m_date else "2026-08-01"
+
+            # Status
+            status = "published"
+            m_st = re.search(r'^status:\s*([a-zA-Z0-9_-]+)', raw, re.MULTILINE | re.IGNORECASE)
+            if m_st:
+                status = m_st.group(1).lower().strip()
+            
+            if status == "draft":
+                draft_count += 1
+            elif status == "unpublished":
+                unpub_count += 1
+            else:
+                status = "published"
+                pub_count += 1
 
             # Title
             title = ""
@@ -708,21 +870,16 @@ class AdminHandler(BaseHTTPRequestHandler):
             elif "-eng" in fname:
                 lang = "en"
 
-            # Stem
             stem = fname.replace("renungan-", "").replace(".md", "")
             core_topic = re.sub(r'-\d{4}-\d{2}-\d{2}', '', stem)
             core_topic = re.sub(r'-\d+-agustus-\d{4}', '', core_topic)
             core_topic = re.sub(r'-(?:ind|eng|jv)$', '', core_topic)
-            group_id = f"{date_iso}_{core_topic}"
-            unique_groups.add(group_id)
 
-            # Check media
             base_no_ext = os.path.splitext(fname)[0]
             has_audio = os.path.exists(os.path.join(RENUNGAN_DIR, base_no_ext + ".ogg")) or os.path.exists(os.path.join(RENUNGAN_DIR, base_no_ext + ".mp3"))
             if has_audio:
                 audios.add(base_no_ext)
 
-            # Check poster
             has_poster = False
             for p_cand in [f"poster-{core_topic}-{date_iso}.jpg", f"poster-{core_topic}.jpg", f"infografis-{core_topic}-{date_iso}.png"]:
                 if os.path.exists(os.path.join(RENUNGAN_DIR, p_cand)):
@@ -738,6 +895,7 @@ class AdminHandler(BaseHTTPRequestHandler):
                 "date": date_iso,
                 "title": title.replace("*", "").replace("#", "").strip(),
                 "lang": lang,
+                "status": status,
                 "has_poster": has_poster,
                 "has_audio": has_audio,
                 "gdoc": gdoc
@@ -745,7 +903,9 @@ class AdminHandler(BaseHTTPRequestHandler):
 
         response = {
             "stats": {
-                "unique_count": len(unique_groups),
+                "published_count": pub_count,
+                "draft_count": draft_count,
+                "unpublished_count": unpub_count,
                 "total_files": len(md_files),
                 "poster_count": len(glob.glob(os.path.join(RENUNGAN_DIR, "poster-*.jpg")) + glob.glob(os.path.join(RENUNGAN_DIR, "infografis-*.png"))),
                 "audio_count": len(glob.glob(os.path.join(RENUNGAN_DIR, "*.ogg")) + glob.glob(os.path.join(RENUNGAN_DIR, "*.mp3")))
@@ -774,7 +934,6 @@ class AdminHandler(BaseHTTPRequestHandler):
             if not fname:
                 return self.send_json({"status": "error", "error": "Invalid filename"}, status=400)
 
-            # Save to both kontemplasi and share
             p1 = os.path.join(RENUNGAN_DIR, fname)
             p2 = os.path.join(SHARE_DIR, fname)
             with open(p1, "w", encoding="utf-8") as fp:
@@ -787,6 +946,42 @@ class AdminHandler(BaseHTTPRequestHandler):
         except Exception as e:
             self.send_json({"status": "error", "error": str(e)}, status=500)
 
+    def handle_api_status(self):
+        length = int(self.headers.get('Content-Length', 0))
+        body = self.rfile.read(length).decode('utf-8')
+        try:
+            data = json.loads(body)
+            fname = os.path.basename(data.get("file", ""))
+            new_status = data.get("status", "published").lower().strip()
+            if not fname or new_status not in ["published", "draft", "unpublished"]:
+                return self.send_json({"status": "error", "error": "Invalid params"}, status=400)
+
+            p1 = os.path.join(RENUNGAN_DIR, fname)
+            p2 = os.path.join(SHARE_DIR, fname)
+            if not os.path.exists(p1):
+                return self.send_json({"status": "error", "error": "File not found"}, status=404)
+
+            with open(p1, "r", encoding="utf-8") as fp:
+                raw = fp.read()
+
+            if raw.startswith("---"):
+                if re.search(r'^status:\s*.*$', raw, re.MULTILINE):
+                    updated = re.sub(r'^status:\s*.*$', f"status: {new_status}", raw, flags=re.MULTILINE)
+                else:
+                    updated = re.sub(r'^---', f"---\\nstatus: {new_status}", raw, count=1)
+            else:
+                updated = f"---\\nstatus: {new_status}\\n---\\n\\n" + raw
+
+            with open(p1, "w", encoding="utf-8") as fp:
+                fp.write(updated)
+            if os.path.exists(SHARE_DIR):
+                with open(p2, "w", encoding="utf-8") as fp:
+                    fp.write(updated)
+
+            self.send_json({"status": "ok", "file": fname, "new_status": new_status})
+        except Exception as e:
+            self.send_json({"status": "error", "error": str(e)}, status=500)
+
     def handle_api_upload(self):
         content_type = self.headers.get('Content-Type', '')
         if 'multipart/form-data' not in content_type:
@@ -795,7 +990,6 @@ class AdminHandler(BaseHTTPRequestHandler):
         length = int(self.headers.get('Content-Length', 0))
         body = self.rfile.read(length)
         
-        # Parse boundary
         boundary = None
         for item in content_type.split(';'):
             item = item.strip()
