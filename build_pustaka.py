@@ -4,7 +4,7 @@ import glob
 import re
 import json
 
-def build_deduped_pustaka():
+def build_strict_pustaka():
     renungan_dir = "/home/satyaaditech/kontemplasi/renungan"
     pustaka_dir = "/home/satyaaditech/kontemplasi"
     os.makedirs(pustaka_dir, exist_ok=True)
@@ -109,27 +109,21 @@ def build_deduped_pustaka():
                 audio_file = f"renungan/{base_no_ext}{ext}"
                 break
 
-        # Poster / Infographic / Cover Image Detection
+        # STRICT POSTER MATCHING ONLY
+        # Verified explicit list of actual infographic posters
         poster_file = ""
-        candidates = [
-            f"poster-{core_topic}.jpg", f"poster-{core_topic}.png",
-            f"infografis-{core_topic}.png", f"infografis_{core_topic}.png",
-            f"cover-{core_topic}.png", f"cover-{stem}.png",
-            f"poster-{stem}.jpg", f"poster-{stem}.png",
-            f"poster-teladan-{date_iso}.jpg",
-            f"infografis-budi-darma-{date_iso}.png",
-            f"cover-sabar-momot-{date_iso}.png",
-            f"cover-ngunjara-hawa-napsu-{date_iso}.png",
-            f"cover-kamardikan-{date_iso}.png",
-            f"cover-sokur-{date_iso}.png",
-            f"cover-sumelang-{date_iso}.png",
-            f"cover-narima-2026-08-15-v3.png",
-            f"cover-rela-2026-08-15.png"
-        ]
-        for cand in candidates:
-            if os.path.exists(os.path.join(renungan_dir, cand)):
-                poster_file = f"renungan/{cand}"
-                break
+        group_id = f"{date_iso}_{core_topic}"
+
+        explicit_posters = {
+            "2026-09-05_teladan": "renungan/poster-teladan-2026-09-05.jpg",
+            "2026-08-27_beban-batin": "renungan/poster-beban-ringan.jpg",
+            "2026-08-25_ngunjara-hawa-napsu": "renungan/newsletter-ngunjara-hawa-napsu-2026-08-25.png",
+            "2026-08-20_budi-darma": "renungan/infografis-budi-darma-2026-08-20.png",
+            "2026-08-19_nderek-paduka": "renungan/creative_infographic_nderek_paduka_2026-08-19.jpg"
+        }
+
+        if group_id in explicit_posters and os.path.exists(os.path.join(pustaka_dir, explicit_posters[group_id])):
+            poster_file = explicit_posters[group_id]
 
         # Book source
         book_source = "Sasangka Jati"
@@ -174,7 +168,7 @@ def build_deduped_pustaka():
             "date_iso": date_iso,
             "date_str": date_str,
             "core_topic": core_topic,
-            "group_id": f"{date_iso}_{core_topic}",
+            "group_id": group_id,
             "lang": lang,
             "v_rank": v_rank,
             "title": title,
@@ -239,7 +233,7 @@ def build_deduped_pustaka():
             "versions": versions_payload
         })
 
-    # STRICT SORT: NEWEST FIRST (latest date at the top)
+    # STRICT SORT: NEWEST FIRST
     deduped_articles.sort(key=lambda x: x["date_iso"], reverse=True)
 
     articles_json_str = json.dumps(deduped_articles, ensure_ascii=False)
@@ -1299,7 +1293,7 @@ def build_deduped_pustaka():
         f.write(html_template)
     
     shutil.copy(os.path.join(pustaka_dir, "index.html"), "/home/satyaaditech/share/pustaka/index.html")
-    print("Deduplicated & Chronologically Sorted Pustaka built successfully.")
+    print("Strict Poster Mapping Pustaka built successfully.")
 
 if __name__ == "__main__":
-    build_deduped_pustaka()
+    build_strict_pustaka()
