@@ -986,13 +986,14 @@
 
     function renderReaderContent() {
       if (!activeArticle) return;
-      const v = activeArticle.versions[currentActiveLang];
+      const v = activeArticle.versions[currentActiveLang] || activeArticle.versions[activeArticle.primary_lang] || Object.values(activeArticle.versions)[0];
+      if (!v) return;
+
       const content = document.getElementById('modalContent');
       const dateEl = document.getElementById('modalDate');
       const gdocBtn = document.getElementById('modalGDocBtn');
       const audioContainer = document.getElementById('modalAudioContainer');
-      const audioPlayer = document.getElementById('modalAudio');
-      const posterBtn = document.getElementById('modalPosterBtn');
+      const audioPlayer = document.getElementById('modalAudioPlayer');
 
       const catLabels = {
         'renungan-harian': '🌅 Renungan Harian',
@@ -1003,23 +1004,30 @@
       const catClass = activeArticle.category === 'esai-kontemplasi' ? 'cat-esai' : (activeArticle.category === 'readers-voice' ? 'cat-readers' : (activeArticle.category === 'ulasan-serat' ? 'cat-ulasan' : 'cat-renungan'));
       const catBadge = `<span class="badge-cat ${catClass}">${catLabels[activeArticle.category] || '🌅 Renungan'}</span>`;
       const authorBadge = activeArticle.author ? ` • ✍️ ${activeArticle.author}` : '';
-      dateEl.innerHTML = `${catBadge} <span style="margin-left:6px;">${v.date || activeArticle.date_iso}</span>${authorBadge}`;
+      if (dateEl) {
+        dateEl.innerHTML = `${catBadge} <span style="margin-left:6px;">${v.date || activeArticle.date_iso}</span>${authorBadge}`;
+      }
+
       const gdocLink = v.gdoc || activeArticle.gdoc;
-      if (gdocLink) {
-        gdocBtn.href = gdocLink;
-        gdocBtn.style.display = 'inline-flex';
-      } else {
-        gdocBtn.style.display = 'none';
+      if (gdocBtn) {
+        if (gdocLink) {
+          gdocBtn.href = gdocLink;
+          gdocBtn.style.display = 'inline-flex';
+        } else {
+          gdocBtn.style.display = 'none';
+        }
       }
 
       const audioSrc = v.audio || activeArticle.audio;
-      if (audioSrc) {
-        audioPlayer.src = audioSrc;
-        audioContainer.style.display = 'block';
-      } else {
-        audioPlayer.pause();
-        audioPlayer.src = '';
-        audioContainer.style.display = 'none';
+      if (audioContainer && audioPlayer) {
+        if (audioSrc) {
+          audioPlayer.src = audioSrc;
+          audioContainer.style.display = 'block';
+        } else {
+          try { audioPlayer.pause(); } catch(e) {}
+          audioPlayer.src = '';
+          audioContainer.style.display = 'none';
+        }
       }
 
       let posterHtml = '';
@@ -1032,7 +1040,7 @@
         `;
       }
 
-      let formatted = v.raw;
+      let formatted = v.raw || '';
       formatted = formatted.replace(/^_(.*?)_$/gm, '<em>$1</em>');
       formatted = formatted.replace(/\*([^\*]+)\*/g, '<strong>$1</strong>');
       formatted = formatted.replace(/_([^_]+)_/g, '<em>$1</em>');
@@ -1048,7 +1056,9 @@
         return `<p>${p.replace(/\n/g, '<br>')}</p>`;
       }).join('');
 
-      content.innerHTML = posterHtml + paras;
+      if (content) {
+        content.innerHTML = posterHtml + paras;
+      }
     }
 
     function closeModal() {

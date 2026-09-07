@@ -556,9 +556,6 @@ HTML_ADMIN = """<!DOCTYPE html>
       setTimeout(() => { t.style.display = 'none'; }, 2500);
     }
 
-    // Auto load on open (secured by Tailscale)
-    loadData();
-
     function switchTab(tabId) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -607,18 +604,27 @@ HTML_ADMIN = """<!DOCTYPE html>
       });
     }
 
+    function updateStats(stats) {
+      if (!stats) return;
+      document.getElementById('statPub').innerText = stats.published_count || 0;
+      document.getElementById('statDraft').innerText = stats.draft_count || 0;
+      document.getElementById('statUnpub').innerText = stats.unpublished_count || 0;
+      document.getElementById('statFiles').innerText = stats.total_files || 0;
+      document.getElementById('statMedia').innerText = `${stats.poster_count || 0} poster / ${stats.audio_count || 0} audio`;
+    }
+
     function loadData() {
       fetch('/api/list')
         .then(r => r.json())
         .then(data => {
+          if (!data || !data.files) return;
           renunganList = data.files;
-          document.getElementById('statPub').innerText = data.stats.published_count;
-          document.getElementById('statDraft').innerText = data.stats.draft_count;
-          document.getElementById('statUnpub').innerText = data.stats.unpublished_count;
-          document.getElementById('statFiles').innerText = data.stats.total_files;
-          document.getElementById('statMedia').innerText = `${data.stats.poster_count} poster / ${data.stats.audio_count} audio`;
+          updateStats(data.stats);
           updateSortIcons();
           renderTable();
+        })
+        .catch(err => {
+          console.error('Fetch error:', err);
         });
     }
 
@@ -952,19 +958,149 @@ Tulis wedharan, panyuraos, utawi esai kontemplasi kanthi cetha lan runtut ing mr
     function closeLogModal() {
       document.getElementById('logModal').classList.remove('active');
     }
+
+    /* __INITIAL_DATA__ */
   </script>
 </body>
 </html>
 """
 
+def get_all_files_data():
+    md_files = sorted(glob.glob(os.path.join(RENUNGAN_DIR, "*.md")), reverse=True)
+    files_data = []
+    posters = set()
+    audios = set()
+    pub_count = 0
+    draft_count = 0
+    unpub_count = 0
+
+    for f in md_files:
+        fname = os.path.basename(f)
+        with open(f, "r", encoding="utf-8") as fp:
+            raw = fp.read()
+
+        m_date = re.search(r'(\d{4}-\d{2}-\d{2})', fname)
+        date_iso = m_date.group(1) if m_date else "2026-08-01"
+
+        # Status
+        status = "published"
+        m_st = re.search(r'^status:\s*([a-zA-Z0-9_-]+)', raw, re.MULTILINE | re.IGNORECASE)
+        if m_st:
+            status = m_st.group(1).lower().strip()
+        
+        if status == "draft":
+            draft_count += 1
+        elif status == "unpublished":
+            unpub_count += 1
+        else:
+            status = "published"
+            pub_count += 1
+
+        # Title
+        title = ""
+        for line in raw.splitlines()[:6]:
+            if "title:" in line:
+                title = line.replace("title:", "").replace('"', '').replace("'", "").strip()
+                break
+            elif line.startswith("# "):
+                title = line.replace("# ", "").strip()
+                break
+        if not title:
+            title = fname
+
+        lang = "jv"
+        if "-ind" in fname or "ind" in fname.lower() and not "pindha" in fname:
+            lang = "id"
+        elif "-eng" in fname:
+            lang = "en"
+
+        # Category
+        cat = "renungan-harian"
+        m_cat = re.search(r'^category:\s*([a-zA-Z0-9_-]+)', raw, re.MULTILINE | re.IGNORECASE)
+        if m_cat:
+            cat = m_cat.group(1).lower().strip()
+        elif "ulasan" in fname.lower():
+            cat = "ulasan-serat"
+        elif "esai" in fname.lower():
+            cat = "esai-kontemplasi"
+        elif "suara" in fname.lower() or "voice" in fname.lower():
+            cat = "readers-voice"
+
+        cat_map = {
+            "renungan": "renungan-harian",
+            "renungan-harian": "renungan-harian",
+            "esai": "esai-kontemplasi",
+            "esai-kontemplasi": "esai-kontemplasi",
+            "readers-voice": "readers-voice",
+            "reader-voice": "readers-voice",
+            "suara-pembaca": "readers-voice",
+            "ulasan": "ulasan-serat",
+            "ulasan-serat": "ulasan-serat"
+        }
+        cat = cat_map.get(cat, "renungan-harian")
+
+        # Author
+        author = ""
+        m_auth = re.search(r'^author:\s*([^\n\r]+)', raw, re.MULTILINE | re.IGNORECASE)
+        if m_auth:
+            author = m_auth.group(1).replace('"', '').replace("'", '').strip()
+
+        stem = fname.replace("renungan-", "").replace(".md", "")
+        core_topic = re.sub(r'-\d{4}-\d{2}-\d{2}', '', stem)
+        core_topic = re.sub(r'-\d+-agustus-\d{4}', '', core_topic)
+        core_topic = re.sub(r'-(?:ind|eng|jv)$', '', core_topic)
+
+        base_no_ext = os.path.splitext(fname)[0]
+        has_audio = os.path.exists(os.path.join(RENUNGAN_DIR, base_no_ext + ".ogg")) or os.path.exists(os.path.join(RENUNGAN_DIR, base_no_ext + ".mp3"))
+        if has_audio:
+            audios.add(base_no_ext)
+
+        has_poster = False
+        for p_cand in [f"poster-{core_topic}-{date_iso}.jpg", f"poster-{core_topic}.jpg", f"infografis-{core_topic}-{date_iso}.png"]:
+            if os.path.exists(os.path.join(RENUNGAN_DIR, p_cand)):
+                has_poster = True
+                posters.add(p_cand)
+                break
+
+        gdoc_match = re.search(r'https://docs\.google\.com/document/d/([a-zA-Z0-9_-]+)', raw)
+        gdoc = gdoc_match.group(0) if gdoc_match else ""
+
+        files_data.append({
+            "fname": fname,
+            "date": date_iso,
+            "title": title.replace("*", "").replace("#", "").strip(),
+            "lang": lang,
+            "status": status,
+            "category": cat,
+            "author": author,
+            "has_poster": has_poster,
+            "has_audio": has_audio,
+            "gdoc": gdoc
+        })
+
+    return {
+        "stats": {
+            "published_count": pub_count,
+            "draft_count": draft_count,
+            "unpublished_count": unpub_count,
+            "total_files": len(files_data),
+            "poster_count": len(posters),
+            "audio_count": len(audios)
+        },
+        "files": files_data
+    }
+
 class AdminHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path == "/" or parsed.path == "/index.html":
+            data = get_all_files_data()
+            init_js = f"const __initData = {json.dumps(data)}; renunganList = __initData.files; updateStats(__initData.stats); updateSortIcons(); renderTable();"
+            html_out = HTML_ADMIN.replace("/* __INITIAL_DATA__ */", init_js)
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.end_headers()
-            self.wfile.write(HTML_ADMIN.encode("utf-8"))
+            self.wfile.write(html_out.encode("utf-8"))
         elif parsed.path == "/api/list":
             self.handle_api_list()
         elif parsed.path == "/api/get":
@@ -990,129 +1126,11 @@ class AdminHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def handle_api_list(self):
-        md_files = sorted(glob.glob(os.path.join(RENUNGAN_DIR, "*.md")), reverse=True)
-        files_data = []
-        posters = set()
-        audios = set()
-        pub_count = 0
-        draft_count = 0
-        unpub_count = 0
-
-        for f in md_files:
-            fname = os.path.basename(f)
-            with open(f, "r", encoding="utf-8") as fp:
-                raw = fp.read()
-
-            m_date = re.search(r'(\d{4}-\d{2}-\d{2})', fname)
-            date_iso = m_date.group(1) if m_date else "2026-08-01"
-
-            # Status
-            status = "published"
-            m_st = re.search(r'^status:\s*([a-zA-Z0-9_-]+)', raw, re.MULTILINE | re.IGNORECASE)
-            if m_st:
-                status = m_st.group(1).lower().strip()
-            
-            if status == "draft":
-                draft_count += 1
-            elif status == "unpublished":
-                unpub_count += 1
-            else:
-                status = "published"
-                pub_count += 1
-
-            # Title
-            title = ""
-            for line in raw.splitlines()[:6]:
-                if "title:" in line:
-                    title = line.replace("title:", "").replace('"', '').replace("'", "").strip()
-                    break
-                elif line.startswith("# "):
-                    title = line.replace("# ", "").strip()
-                    break
-            if not title:
-                title = fname
-
-            lang = "jv"
-            if "-ind" in fname or "ind" in fname.lower() and not "pindha" in fname:
-                lang = "id"
-            elif "-eng" in fname:
-                lang = "en"
-
-            # Category
-            cat = "renungan-harian"
-            m_cat = re.search(r'^category:\s*([a-zA-Z0-9_-]+)', raw, re.MULTILINE | re.IGNORECASE)
-            if m_cat:
-                cat = m_cat.group(1).lower().strip()
-            elif "ulasan" in fname.lower():
-                cat = "ulasan-serat"
-            elif "esai" in fname.lower():
-                cat = "esai-kontemplasi"
-            elif "suara" in fname.lower() or "voice" in fname.lower():
-                cat = "readers-voice"
-
-            cat_map = {
-                "renungan": "renungan-harian",
-                "renungan-harian": "renungan-harian",
-                "esai": "esai-kontemplasi",
-                "esai-kontemplasi": "esai-kontemplasi",
-                "readers-voice": "readers-voice",
-                "reader-voice": "readers-voice",
-                "suara-pembaca": "readers-voice",
-                "ulasan": "ulasan-serat",
-                "ulasan-serat": "ulasan-serat"
-            }
-            cat = cat_map.get(cat, "renungan-harian")
-
-            # Author
-            author = ""
-            m_auth = re.search(r'^author:\s*([^\n\r]+)', raw, re.MULTILINE | re.IGNORECASE)
-            if m_auth:
-                author = m_auth.group(1).replace('"', '').replace("'", '').strip()
-
-            stem = fname.replace("renungan-", "").replace(".md", "")
-            core_topic = re.sub(r'-\d{4}-\d{2}-\d{2}', '', stem)
-            core_topic = re.sub(r'-\d+-agustus-\d{4}', '', core_topic)
-            core_topic = re.sub(r'-(?:ind|eng|jv)$', '', core_topic)
-
-            base_no_ext = os.path.splitext(fname)[0]
-            has_audio = os.path.exists(os.path.join(RENUNGAN_DIR, base_no_ext + ".ogg")) or os.path.exists(os.path.join(RENUNGAN_DIR, base_no_ext + ".mp3"))
-            if has_audio:
-                audios.add(base_no_ext)
-
-            has_poster = False
-            for p_cand in [f"poster-{core_topic}-{date_iso}.jpg", f"poster-{core_topic}.jpg", f"infografis-{core_topic}-{date_iso}.png"]:
-                if os.path.exists(os.path.join(RENUNGAN_DIR, p_cand)):
-                    has_poster = True
-                    posters.add(p_cand)
-                    break
-
-            gdoc_match = re.search(r'https://docs\.google\.com/document/d/([a-zA-Z0-9_-]+)', raw)
-            gdoc = gdoc_match.group(0) if gdoc_match else ""
-
-            files_data.append({
-                "fname": fname,
-                "date": date_iso,
-                "title": title.replace("*", "").replace("#", "").strip(),
-                "lang": lang,
-                "status": status,
-                "category": cat,
-                "author": author,
-                "has_poster": has_poster,
-                "has_audio": has_audio,
-                "gdoc": gdoc
-            })
-
-        response = {
-            "stats": {
-                "published_count": pub_count,
-                "draft_count": draft_count,
-                "unpublished_count": unpub_count,
-                "total_files": len(md_files),
-                "poster_count": len(glob.glob(os.path.join(RENUNGAN_DIR, "poster-*.jpg")) + glob.glob(os.path.join(RENUNGAN_DIR, "infografis-*.png"))),
-                "audio_count": len(glob.glob(os.path.join(RENUNGAN_DIR, "*.ogg")) + glob.glob(os.path.join(RENUNGAN_DIR, "*.mp3")))
-            },
-            "files": files_data
-        }
+        data = get_all_files_data()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode("utf-8"))
         self.send_json(response)
 
     def handle_api_get(self, fname):
