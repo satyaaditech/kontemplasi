@@ -1,12 +1,3 @@
----
-title: "Menjaga Nama Baik: Berbudi Luhur untuk Menjaga Kesucian Jiwa 🛡️"
-date: 2026-09-01
-tags: ['renungan', 'bahasa-indonesia', 'sabda-khusus', 'budiluhur', 'nama-baik']
-language: id
----
-
-# Menjaga Nama Baik: Berbudi Luhur untuk Menjaga Kesucian Jiwa 🛡️
-
 *SELASA, 1 SEPTEMBER 2026*
 
 *RENUNGAN PENYISWAAN*
