@@ -41,5 +41,6 @@ Kekiyatan sejati punika sanès dumunung wonten ing kakuatan males lan ngasoraken
 🙏 Mugi kita sedaya tansah pinaringan Tuntunan lan Pengayoman, Sih saking Sang Guru Sejati. Satuhu. 🙏
 
 Tautan Pustaka Digital & Dokumen:
+• Video YouTube: https://youtu.be/gcUxGDiUSeI
 • Web Kontemplasi: https://kontemplasi.satyaaditech.web.id/
 • Google Doc: https://docs.google.com/document/d/1mxud2r_c4aDCozdp0qVeU0lGrlQ-vdrJT1TihZcjGs0/edit

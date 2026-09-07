@@ -43,5 +43,6 @@ Kekuatan sejati bukan terletak pada kemampuan membalas dan mengalahkan sesama, m
 🙏 Semoga kita semua senantiasa dalam Lindungan dan Bimbingan Kasih Sang Guru Sejati. Satuhu. 🙏
 
 Tautan Pustaka Digital & Dokumen:
+• Video YouTube: https://youtu.be/gcUxGDiUSeI
 • Web Kontemplasi: https://kontemplasi.satyaaditech.web.id/
 • Google Doc: https://docs.google.com/document/d/1mxud2r_c4aDCozdp0qVeU0lGrlQ-vdrJT1TihZcjGs0/edit
