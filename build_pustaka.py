@@ -117,7 +117,7 @@ def build_clean_pustaka():
 
         explicit_posters = {
             "2026-09-05_teladan": "renungan/poster-teladan-2026-09-05.jpg",
-            "2026-08-27_beban-batin": "renungan/poster-beban-ringan.jpg",
+            "2026-08-27_beban-batin": "renungan/poster-beban-batin-2026-08-27.jpg",
             "2026-08-25_ngunjara-hawa-napsu": "renungan/newsletter-ngunjara-hawa-napsu-2026-08-25.png",
             "2026-08-20_budi-darma": "renungan/infografis-budi-darma-2026-08-20.png",
             "2026-08-19_nderek-paduka": "renungan/creative_infographic_nderek_paduka_2026-08-19.jpg"
