@@ -1228,6 +1228,8 @@ def build_clean_pustaka():
         grid.appendChild(card);
       }});
     }}
+
+    function openReader(article, preferredLang) {{
       activeArticle = article;
       const modal = document.getElementById('readerModal');
       const langSwitcher = document.getElementById('modalLangSwitcher');

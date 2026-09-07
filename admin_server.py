@@ -372,22 +372,11 @@ HTML_ADMIN = """<!DOCTYPE html>
 </head>
 <body>
 
-  <!-- TOAST -->
-  <div id="toast" class="toast">Status berhasil diperbarui!</div>
+  <body>
+    <div class="toast" id="toast"></div>
 
-  <!-- PIN PROMPT OVERLAY -->
-  <div class="pin-overlay" id="pinOverlay">
-    <div class="pin-box">
-      <div style="font-size:36px; margin-bottom:12px;">🛡️</div>
-      <h3>Portal Admin Pustaka</h3>
-      <p style="font-size:13px; color:var(--text-muted);">Mlebetaken PIN pribadi kagem mbikak kontrol.</p>
-      <input type="password" id="pinInput" class="pin-input" placeholder="••••" maxlength="6" autofocus onkeydown="if(event.key==='Enter') checkPin()">
-      <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="checkPin()">Mlebet / Login</button>
-    </div>
-  </div>
-
-  <!-- HEADER -->
-  <header class="header">
+    <!-- HEADER -->
+    <header class="header">
     <div class="brand">
       <span>📜</span> Admin Kontemplasi
     </div>
@@ -567,21 +556,8 @@ HTML_ADMIN = """<!DOCTYPE html>
       setTimeout(() => { t.style.display = 'none'; }, 2500);
     }
 
-    function checkPin() {
-      const pin = document.getElementById('pinInput').value;
-      if (pin === '1949') {
-        document.getElementById('pinOverlay').style.display = 'none';
-        sessionStorage.setItem('admin_auth', '1');
-        loadData();
-      } else {
-        alert('PIN lepat! Mangga dipun-priksa malih.');
-      }
-    }
-
-    if (sessionStorage.getItem('admin_auth') === '1') {
-      document.getElementById('pinOverlay').style.display = 'none';
-      loadData();
-    }
+    // Auto load on open (secured by Tailscale)
+    loadData();
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
