@@ -932,7 +932,7 @@ def build_strict_pustaka():
   <main class="container">
     <!-- HERO SECTION -->
     <section class="hero">
-      <h2>Arsip & Renungan Olah Rasa</h2>
+      <h2>Kumpulan Kontemplasi berdasar Ajaran Sang Guru Sejati</h2>
       <p>Kumpulan pethikan sabda murni, ulasan panyuraos batin, sarta tuntunan laku padintenan ingkang katata jangkep lan runtut.</p>
       
       <!-- SEARCH INPUT -->
