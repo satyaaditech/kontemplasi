@@ -153,7 +153,34 @@ HTML_ADMIN = """<!DOCTYPE html>
       overflow: hidden;
     }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-    th { background: #172033; padding: 12px 16px; color: var(--text-muted); font-weight: 700; border-bottom: 1px solid var(--surface-border); }
+    th {
+      background: #172033;
+      padding: 12px 16px;
+      color: var(--text-muted);
+      font-weight: 700;
+      border-bottom: 1px solid var(--surface-border);
+      user-select: none;
+    }
+    th.sortable {
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    th.sortable:hover {
+      color: var(--primary);
+      background: #1c273e;
+    }
+    th.sorted {
+      color: var(--text);
+    }
+    .sort-icon {
+      margin-left: 4px;
+      font-size: 11px;
+      opacity: 0.6;
+    }
+    th.sorted .sort-icon {
+      opacity: 1;
+      color: var(--primary);
+    }
     td { padding: 12px 16px; border-bottom: 1px solid var(--surface-border); vertical-align: middle; }
     tr:hover td { background: #243049; }
 
@@ -411,12 +438,12 @@ HTML_ADMIN = """<!DOCTYPE html>
         <table>
           <thead>
             <tr>
-              <th>Status</th>
-              <th>Tanggal</th>
-              <th>Judul Renungan</th>
-              <th>Bahasa</th>
-              <th>Media</th>
-              <th>Google Doc</th>
+              <th class="sortable" onclick="handleSort('status')">Status <span id="sort-status" class="sort-icon">⇅</span></th>
+              <th class="sortable" onclick="handleSort('date')">Tanggal <span id="sort-date" class="sort-icon">▼</span></th>
+              <th class="sortable" onclick="handleSort('title')">Judul Renungan <span id="sort-title" class="sort-icon">⇅</span></th>
+              <th class="sortable" onclick="handleSort('lang')">Bahasa <span id="sort-lang" class="sort-icon">⇅</span></th>
+              <th class="sortable" onclick="handleSort('media')">Media <span id="sort-media" class="sort-icon">⇅</span></th>
+              <th class="sortable" onclick="handleSort('gdoc')">Google Doc <span id="sort-gdoc" class="sort-icon">⇅</span></th>
               <th>Aksi</th>
             </tr>
           </thead>
@@ -500,6 +527,8 @@ HTML_ADMIN = """<!DOCTYPE html>
     let renunganList = [];
     let currentActiveFile = '';
     let currentStatusFilter = 'all';
+    let sortKey = 'date';
+    let sortAsc = false; // Default: terbaru ke lama
 
     function showToast(msg) {
       const t = document.getElementById('toast');
@@ -538,6 +567,33 @@ HTML_ADMIN = """<!DOCTYPE html>
       renderTable();
     }
 
+    function handleSort(key) {
+      if (sortKey === key) {
+        sortAsc = !sortAsc;
+      } else {
+        sortKey = key;
+        sortAsc = (key === 'date' ? false : true);
+      }
+      updateSortIcons();
+      renderTable();
+    }
+
+    function updateSortIcons() {
+      ['status', 'date', 'title', 'lang', 'media', 'gdoc'].forEach(k => {
+        const icon = document.getElementById(`sort-${k}`);
+        const th = icon ? icon.closest('th') : null;
+        if (!icon || !th) return;
+        
+        if (sortKey === k) {
+          th.classList.add('sorted');
+          icon.innerText = sortAsc ? '▲' : '▼';
+        } else {
+          th.classList.remove('sorted');
+          icon.innerText = '⇅';
+        }
+      });
+    }
+
     function loadData() {
       fetch('/api/list')
         .then(r => r.json())
@@ -548,6 +604,7 @@ HTML_ADMIN = """<!DOCTYPE html>
           document.getElementById('statUnpub').innerText = data.stats.unpublished_count;
           document.getElementById('statFiles').innerText = data.stats.total_files;
           document.getElementById('statMedia').innerText = `${data.stats.poster_count} poster / ${data.stats.audio_count} audio`;
+          updateSortIcons();
           renderTable();
         });
     }
@@ -557,10 +614,40 @@ HTML_ADMIN = """<!DOCTYPE html>
       const q = document.getElementById('searchTable').value.toLowerCase();
       tbody.innerHTML = '';
 
-      const filtered = renunganList.filter(f => {
+      let filtered = renunganList.filter(f => {
         const matchesQuery = !q || f.title.toLowerCase().includes(q) || f.date.includes(q) || f.fname.toLowerCase().includes(q);
         const matchesStatus = currentStatusFilter === 'all' || f.status === currentStatusFilter;
         return matchesQuery && matchesStatus;
+      });
+
+      // Sorting
+      filtered.sort((a, b) => {
+        let valA = '', valB = '';
+        if (sortKey === 'date') {
+          valA = a.date || '';
+          valB = b.date || '';
+        } else if (sortKey === 'status') {
+          valA = a.status || '';
+          valB = b.status || '';
+        } else if (sortKey === 'title') {
+          valA = a.title || '';
+          valB = b.title || '';
+        } else if (sortKey === 'lang') {
+          valA = a.lang || '';
+          valB = b.lang || '';
+        } else if (sortKey === 'media') {
+          valA = (a.has_poster ? '2' : '0') + (a.has_audio ? '1' : '0');
+          valB = (b.has_poster ? '2' : '0') + (b.has_audio ? '1' : '0');
+        } else if (sortKey === 'gdoc') {
+          valA = a.gdoc || '';
+          valB = b.gdoc || '';
+        }
+
+        let comp = 0;
+        if (valA < valB) comp = -1;
+        else if (valA > valB) comp = 1;
+
+        return sortAsc ? comp : -comp;
       });
 
       if (filtered.length === 0) {
