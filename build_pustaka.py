@@ -1,0 +1,1128 @@
+import os
+import glob
+import re
+import json
+
+def update_library_with_posters():
+    renungan_dir = "/home/satyaaditech/kontemplasi/renungan"
+    pustaka_dir = "/home/satyaaditech/kontemplasi"
+    os.makedirs(pustaka_dir, exist_ok=True)
+
+    md_files = sorted(glob.glob(os.path.join(renungan_dir, "*.md")), reverse=True)
+    articles = []
+
+    def clean_stars(text):
+        if not text:
+            return ""
+        return re.sub(r'^\*+|\*+$', '', text.strip()).strip()
+
+    for fpath in md_files:
+        fname = os.path.basename(fpath)
+        with open(fpath, "r", encoding="utf-8") as f:
+            raw_text = f.read()
+
+        # Language detection
+        lang = "jv"
+        if "-ind-" in fname or "-ind." in fname or "ind" in fname.lower() and not "pindha" in fname:
+            lang = "id"
+        elif "-eng-" in fname or "-eng." in fname:
+            lang = "en"
+        elif "kamardikan-ind" in fname or "mengampuni-ind" in fname:
+            lang = "id"
+        elif "mengampuni-eng" in fname:
+            lang = "en"
+        
+        if "*SABDA HARI INI" in raw_text or "Salam Bahagia" in raw_text or "*URAIAN" in raw_text:
+            lang = "id"
+        elif "*DAILY SCRIPTURE" in raw_text or "Greetings of Peace" in raw_text or "*EXPOSITION" in raw_text:
+            lang = "en"
+        elif "*PETHIKAN DINTEN" in raw_text or "Sugeng Enjang" in raw_text or "*ANDHARAN" in raw_text:
+            lang = "jv"
+
+        # Date
+        date_match = re.search(r'^\*([A-Z\s,0-9]+)\*', raw_text, re.MULTILINE)
+        date_str = date_match.group(1).strip() if date_match else ""
+        date_iso = ""
+        d_match = re.search(r'(\d{4}-\d{2}-\d{2})', fname)
+        if d_match:
+            date_iso = d_match.group(1)
+        if not date_str:
+            date_str = date_iso
+
+        # Title
+        title = ""
+        lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
+        for l in lines[1:5]:
+            if "RENUNGAN" not in l and not l.startswith("_Salam") and not l.startswith("_Sugeng") and not l.startswith("_Greetings"):
+                title = clean_stars(l)
+                break
+        if not title:
+            title = fname.replace(".md", "").replace("renungan-", "").replace("-", " ").title()
+
+        # Google Doc URL
+        gdoc_match = re.search(r'https://docs\.google\.com/document/d/([a-zA-Z0-9_-]+)(?:/edit)?', raw_text)
+        gdoc_url = gdoc_match.group(0) if gdoc_match else ""
+
+        # Audio file
+        base_no_ext = os.path.splitext(fname)[0]
+        audio_file = ""
+        for ext in [".ogg", ".mp3"]:
+            cand = os.path.join(renungan_dir, base_no_ext + ext)
+            if os.path.exists(cand):
+                audio_file = f"renungan/{base_no_ext}{ext}"
+                break
+
+        # Poster / Infographic / Cover Image Detection
+        poster_file = ""
+        stem = fname.replace("renungan-", "").replace(".md", "")
+        core_stem = re.sub(r'-(?:ind|eng)$', '', stem)
+        
+        candidates = [
+            f"poster-{core_stem}.jpg", f"poster-{core_stem}.png",
+            f"infografis-{core_stem}.png", f"infografis_{core_stem}.png",
+            f"cover-{core_stem}.png", f"cover-{stem}.png",
+            f"poster-{stem}.jpg", f"poster-{stem}.png",
+            f"newsletter-{core_stem}-A4-2026-08-25.png"
+        ]
+        if date_iso:
+            candidates.extend([
+                f"poster-teladan-{date_iso}.jpg",
+                f"infografis-budi-darma-{date_iso}.png",
+                f"cover-sabar-momot-{date_iso}.png",
+                f"cover-ngunjara-hawa-napsu-{date_iso}.png",
+                f"cover-kamardikan-{date_iso}.png",
+                f"cover-sokur-{date_iso}.png",
+                f"cover-sumelang-{date_iso}.png"
+            ])
+
+        for cand in candidates:
+            if os.path.exists(os.path.join(renungan_dir, cand)):
+                poster_file = f"renungan/{cand}"
+                break
+
+        # Book source
+        book_source = "Sasangka Jati"
+        if "BRSR" in raw_text or "Bawa Raos" in raw_text:
+            book_source = "Bawa Raos (BRSR)"
+        elif "Sabda Khusus" in raw_text or "SKH" in raw_text:
+            book_source = "Sabda Khusus (SKH)"
+        elif "TKL" in raw_text or "Taman Kamulyan" in raw_text:
+            book_source = "Taman Kamulyan (TKL)"
+        elif "UUJM" in raw_text or "Ular-Ular" in raw_text:
+            book_source = "Ular-Ular (UUJM)"
+        elif "Hasta Sila" in raw_text:
+            book_source = "Sasangka Jati (Hasta Sila)"
+        elif "Tunggal Sabda" in raw_text:
+            book_source = "Sasangka Jati (Tunggal Sabda)"
+        elif "Panembah" in raw_text:
+            book_source = "Sasangka Jati (Panembah)"
+
+        # Excerpt
+        sabda_excerpt = ""
+        sabda_match = re.search(r'(?:PETHIKAN DINTEN PUNIKA|SABDA HARI INI|DAILY SCRIPTURE)\s*:\s*\n*(.*?)(?=\n\s*(?:Terjemahan|Translation|💭|\*ANDHARAN|\*URAIAN|\*EXPOSITION|$))', raw_text, re.DOTALL | re.IGNORECASE)
+        if sabda_match:
+            sabda_excerpt = sabda_match.group(1).strip()
+            sabda_excerpt = re.sub(r'[*_"]', '', sabda_excerpt)
+            sabda_excerpt = (sabda_excerpt[:150] + "...") if len(sabda_excerpt) > 150 else sabda_excerpt
+
+        # Tags
+        tags = [book_source.split("(")[0].strip()]
+        for kw, tag in [
+            ("sabar", "Sabar"), ("rila", "Rila"), ("narima", "Narima"),
+            ("pangapura", "Pengampunan"), ("mengampuni", "Pengampunan"), ("pangaksama", "Pengampunan"),
+            ("lisan", "Lisan"), ("eling", "Eling"), ("hawa napsu", "Hawa Nafsu"), ("nafsu", "Hawa Nafsu"),
+            ("panembah", "Panembah"), ("sukma", "Kasukman"), ("kamardikan", "Kamardikan"),
+            ("merdeka", "Kamardikan"), ("beban", "Katentreman"), ("sumelang", "Piandel"),
+            ("teladan", "Keteladanan")
+        ]:
+            if kw in raw_text.lower() and tag not in tags:
+                tags.append(tag)
+
+        articles.append({
+            "id": fname,
+            "filename": fname,
+            "title": title,
+            "date": date_str,
+            "lang": lang,
+            "book": book_source,
+            "tags": tags[:4],
+            "gdoc": gdoc_url,
+            "audio": audio_file,
+            "poster": poster_file,
+            "excerpt": sabda_excerpt,
+            "raw": raw_text
+        })
+
+    articles_json_str = json.dumps(articles, ensure_ascii=False)
+
+    html_template = f"""<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pustaka Penyiswaan - E-Library Ajaran Sang Guru Sejati</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {{
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #1e3a8a;
+      --primary-light: #eff6ff;
+      --primary-border: #bfdbfe;
+      --accent-gold: #b45309;
+      --accent-gold-bg: #fef3c7;
+      --accent-green: #15803d;
+      --accent-green-bg: #dcfce7;
+      --card-hover: #ffffff;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+      --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --font-ui: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-serif: 'Merriweather', Georgia, serif;
+    }}
+
+    [data-theme="dark"] {{
+      --bg: #090d16;
+      --surface: #131b2e;
+      --surface-border: #1e293b;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-light: #1e293b;
+      --primary-border: #2563eb;
+      --accent-gold: #fbbf24;
+      --accent-gold-bg: #291b00;
+      --accent-green: #4ade80;
+      --accent-green-bg: #052e16;
+      --card-hover: #17223b;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.6);
+    }}
+
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+
+    body {{
+      font-family: var(--font-ui);
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }}
+
+    .container {{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+      width: 100%;
+    }}
+
+    /* HEADER */
+    header {{
+      background-color: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(8px);
+    }}
+
+    .nav-bar {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 72px;
+    }}
+
+    .brand {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+    }}
+
+    .brand-icon {{
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+      box-shadow: 0 2px 8px rgba(30,58,138,0.25);
+    }}
+
+    .brand-text h1 {{
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }}
+
+    .brand-text p {{
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }}
+
+    .header-actions {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }}
+
+    .theme-toggle {{
+      background: var(--bg);
+      border: 1px solid var(--surface-border);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }}
+    .theme-toggle:hover {{
+      background: var(--primary-light);
+      border-color: var(--primary);
+    }}
+
+    /* HERO & SEARCH BAR */
+    .hero {{
+      padding: 32px 0 24px;
+      text-align: center;
+    }}
+
+    .hero h2 {{
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }}
+
+    .hero p {{
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 24px;
+    }}
+
+    .search-container {{
+      max-width: 680px;
+      margin: 0 auto 20px;
+      position: relative;
+    }}
+
+    .search-input {{
+      width: 100%;
+      padding: 14px 20px 14px 48px;
+      font-size: 15px;
+      font-family: inherit;
+      background: var(--surface);
+      border: 2px solid var(--surface-border);
+      border-radius: 12px;
+      color: var(--text-main);
+      box-shadow: var(--shadow-sm);
+      outline: none;
+      transition: all 0.2s;
+    }}
+
+    .search-input:focus {{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--primary-light);
+    }}
+
+    .search-icon {{
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 18px;
+      pointer-events: none;
+    }}
+
+    /* FILTERS */
+    .filter-bar {{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--surface-border);
+    }}
+
+    .lang-tabs {{
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      padding: 4px;
+      border-radius: 10px;
+      gap: 4px;
+    }}
+
+    .lang-tab {{
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }}
+
+    .lang-tab.active {{
+      background: var(--primary);
+      color: white;
+      box-shadow: var(--shadow-sm);
+    }}
+
+    .topic-chips {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }}
+
+    .topic-chip {{
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }}
+
+    .topic-chip:hover, .topic-chip.active {{
+      background: var(--accent-gold-bg);
+      border-color: var(--accent-gold);
+      color: var(--accent-gold);
+      font-weight: 600;
+    }}
+
+    /* GRID & CARDS */
+    .articles-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+      margin-bottom: 60px;
+    }}
+
+    .article-card {{
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }}
+
+    .article-card:hover {{
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary-border);
+    }}
+
+    .card-meta {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }}
+
+    .card-date {{
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }}
+
+    .lang-badge {{
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }}
+    .lang-badge.id {{ background: #fee2e2; color: #991b1b; }}
+    .lang-badge.jv {{ background: #fef3c7; color: #92400e; }}
+    .lang-badge.en {{ background: #e0e7ff; color: #3730a3; }}
+
+    .card-title {{
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }}
+
+    .card-book {{
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-gold);
+      margin-bottom: 8px;
+    }}
+
+    .card-excerpt {{
+      font-family: var(--font-serif);
+      font-size: 13px;
+      color: var(--text-muted);
+      font-style: italic;
+      line-height: 1.5;
+      margin-bottom: 16px;
+      flex-grow: 1;
+    }}
+
+    .card-footer {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--surface-border);
+      padding-top: 12px;
+      margin-top: auto;
+      font-size: 12px;
+    }}
+
+    .card-tags {{
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }}
+
+    .mini-tag {{
+      background: var(--bg);
+      color: var(--text-muted);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+    }}
+
+    .card-features {{
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }}
+
+    .poster-pill {{
+      background: var(--accent-green-bg);
+      color: var(--accent-green);
+      font-weight: 700;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }}
+
+    /* MODAL / READER */
+    .modal-overlay {{
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }}
+
+    .modal-overlay.active {{
+      display: flex;
+    }}
+
+    .reader-modal {{
+      background: var(--surface);
+      width: 100%;
+      max-width: 860px;
+      max-height: 90vh;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--surface-border);
+      animation: modalSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }}
+
+    @keyframes modalSlide {{
+      from {{ opacity: 0; transform: translateY(20px) scale(0.98); }}
+      to {{ opacity: 1; transform: translateY(0) scale(1); }}
+    }}
+
+    .reader-header {{
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--surface-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }}
+
+    .reader-title-area {{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }}
+
+    .reader-actions {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+
+    .btn {{
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid transparent;
+      text-decoration: none;
+      transition: all 0.15s;
+    }}
+
+    .btn-primary {{
+      background: var(--primary);
+      color: white;
+    }}
+    .btn-primary:hover {{
+      opacity: 0.9;
+    }}
+
+    .btn-secondary {{
+      background: var(--bg);
+      border-color: var(--surface-border);
+      color: var(--text-main);
+    }}
+    .btn-secondary:hover {{
+      background: var(--primary-light);
+      border-color: var(--primary);
+    }}
+
+    .btn-close {{
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }}
+    .btn-close:hover {{
+      background: var(--bg);
+      color: var(--text-main);
+    }}
+
+    /* SEAMLESS POSTER CONTAINER */
+    .poster-hero {{
+      margin-bottom: 24px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--surface-border);
+      background: var(--bg);
+      box-shadow: var(--shadow-sm);
+      text-align: center;
+      position: relative;
+    }}
+
+    .poster-img {{
+      width: 100%;
+      height: auto;
+      max-height: 480px;
+      object-fit: contain;
+      display: block;
+      cursor: zoom-in;
+      transition: transform 0.2s;
+    }}
+
+    .poster-hint {{
+      padding: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border-top: 1px solid var(--surface-border);
+      font-family: var(--font-ui);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }}
+
+    .reader-body {{
+      padding: 32px 36px;
+      overflow-y: auto;
+      font-family: var(--font-serif);
+      font-size: 16px;
+      line-height: 1.8;
+      color: var(--text-main);
+    }}
+
+    .reader-body h1, .reader-body h2, .reader-body h3 {{
+      font-family: var(--font-ui);
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 20px 0 12px;
+      color: var(--text-main);
+    }}
+
+    .reader-body h1 {{ font-size: 22px; color: var(--primary); }}
+    .reader-body h2 {{ font-size: 17px; margin-top: 24px; border-bottom: 1px solid var(--surface-border); padding-bottom: 6px; }}
+
+    .reader-body p {{
+      margin-bottom: 16px;
+    }}
+
+    .reader-body blockquote {{
+      border-left: 4px solid var(--accent-gold);
+      background: var(--accent-gold-bg);
+      padding: 16px 20px;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      margin: 20px 0;
+      font-style: italic;
+      color: var(--text-main);
+    }}
+
+    .reader-body ul, .reader-body ol {{
+      margin: 14px 0 18px 24px;
+    }}
+    .reader-body li {{
+      margin-bottom: 8px;
+    }}
+
+    /* LIGHTBOX FOR FULL POSTER INSPECTION */
+    .lightbox-overlay {{
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 250;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }}
+    .lightbox-overlay.active {{ display: flex; }}
+    .lightbox-img {{
+      max-width: 95vw;
+      max-height: 95vh;
+      border-radius: 8px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.8);
+      cursor: zoom-out;
+    }}
+
+    /* TOAST */
+    .toast {{
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0f172a;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      display: none;
+      z-index: 200;
+      animation: fadeIn 0.2s ease;
+    }}
+    .toast.show {{ display: block; }}
+
+    @keyframes fadeIn {{
+      from {{ opacity: 0; transform: translateY(10px); }}
+      to {{ opacity: 1; transform: translateY(0); }}
+    }}
+
+    /* FOOTER */
+    footer {{
+      margin-top: auto;
+      border-top: 1px solid var(--surface-border);
+      background: var(--surface);
+      padding: 24px 0;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }}
+
+    @media (max-width: 640px) {{
+      .hero h2 {{ font-size: 22px; }}
+      .articles-grid {{ grid-template-columns: 1fr; }}
+      .reader-body {{ padding: 20px; font-size: 15px; }}
+      .nav-bar {{ height: 60px; }}
+      .brand-text p {{ display: none; }}
+    }}
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="container nav-bar">
+      <a href="#" class="brand">
+        <div class="brand-icon">📜</div>
+        <div class="brand-text">
+          <h1>Pustaka Penyiswaan</h1>
+          <p>E-Library Ajaran Sang Guru Sejati</p>
+        </div>
+      </a>
+      <div class="header-actions">
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+          <span id="themeIcon">🌙</span> <span id="themeText">Dark</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="container">
+    <!-- HERO SECTION -->
+    <section class="hero">
+      <h2>Arsip & Renungan Olah Rasa</h2>
+      <p>Kumpulan pethikan sabda, ulasan panyuraos batin, sarta tuntunan laku padintenan ingkang katata jangkep lan murni.</p>
+      
+      <!-- SEARCH INPUT -->
+      <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Tulis tema, sabda, utawi tembung kunci (contoh: teladan, sabar, rila, mengampuni)..." oninput="filterArticles()">
+      </div>
+    </section>
+
+    <!-- FILTER BAR -->
+    <section class="filter-bar">
+      <div class="lang-tabs">
+        <button class="lang-tab active" data-lang="all" onclick="setLangFilter('all')">Sedaya ({len(articles)})</button>
+        <button class="lang-tab" data-lang="id" onclick="setLangFilter('id')">🇮🇩 Indonesia</button>
+        <button class="lang-tab" data-lang="jv" onclick="setLangFilter('jv')">ꦗꦮ Basa Jawi</button>
+        <button class="lang-tab" data-lang="en" onclick="setLangFilter('en')">🇬🇧 English</button>
+      </div>
+
+      <div class="topic-chips" id="topicChips">
+        <span class="topic-chip active" onclick="setTopicFilter('all')">Sedaya Tema</span>
+        <span class="topic-chip" onclick="setTopicFilter('Keteladanan')">#Keteladanan</span>
+        <span class="topic-chip" onclick="setTopicFilter('Sabar')">#Sabar</span>
+        <span class="topic-chip" onclick="setTopicFilter('Rila')">#Rila</span>
+        <span class="topic-chip" onclick="setTopicFilter('Narima')">#Narima</span>
+        <span class="topic-chip" onclick="setTopicFilter('Pengampunan')">#Pengampunan</span>
+        <span class="topic-chip" onclick="setTopicFilter('Eling')">#Eling</span>
+        <span class="topic-chip" onclick="setTopicFilter('Hawa Nafsu')">#HawaNafsu</span>
+      </div>
+    </section>
+
+    <!-- ARTICLES GRID -->
+    <section class="articles-grid" id="articlesGrid">
+      <!-- Generated via JS -->
+    </section>
+  </main>
+
+  <!-- READER MODAL -->
+  <div class="modal-overlay" id="readerModal" onclick="closeModalOnOverlay(event)">
+    <div class="reader-modal">
+      <div class="reader-header">
+        <div class="reader-title-area">
+          <span class="lang-badge" id="modalLangBadge">ID</span>
+          <span id="modalDate" style="font-size:13px; font-weight:600; color:var(--text-muted);"></span>
+        </div>
+        <div class="reader-actions">
+          <button class="btn btn-primary" onclick="copyWhatsApp()">📋 Salin WA</button>
+          <a id="modalGDocBtn" href="#" target="_blank" class="btn btn-secondary" style="display:none;">📄 Google Doc</a>
+          <button class="btn-close" onclick="closeModal()">✕</button>
+        </div>
+      </div>
+      
+      <!-- INLINE AUDIO BAR IF PRESENT -->
+      <div id="modalAudioContainer" style="display:none; padding:12px 24px; background:var(--primary-light); border-bottom:1px solid var(--surface-border);">
+        <audio id="modalAudioPlayer" controls style="width:100%; height:36px; outline:none;"></audio>
+      </div>
+
+      <div class="reader-body" id="modalContent">
+        <!-- Rendered text -->
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX FOR POSTER ZOOM -->
+  <div class="lightbox-overlay" id="lightboxModal" onclick="closeLightbox()">
+    <img id="lightboxImg" class="lightbox-img" src="" alt="Infografis Poster Renungan">
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast" id="toast">Format WhatsApp kasil kasalin!</div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <p>© 2026 Pustaka Penyiswaan • Sinox Assistant kagem Pak Satya Adi Dharma</p>
+      <p style="margin-top:4px; font-size:11px; opacity:0.8;">Ajaran Sang Guru Sejati • Kasimpen Murni wonten ing n8nserver</p>
+    </div>
+  </footer>
+
+  <!-- SCRIPT -->
+  <script>
+    const articlesData = {articles_json_str};
+
+    let currentLang = 'all';
+    let currentTopic = 'all';
+    let currentSearch = '';
+    let activeArticle = null;
+
+    function renderArticles() {{
+      const grid = document.getElementById('articlesGrid');
+      grid.innerHTML = '';
+
+      const filtered = articlesData.filter(a => {{
+        const matchLang = (currentLang === 'all' || a.lang === currentLang);
+        const matchTopic = (currentTopic === 'all' || a.tags.includes(currentTopic) || a.book.includes(currentTopic));
+        const q = currentSearch.toLowerCase().trim();
+        const matchSearch = !q || a.title.toLowerCase().includes(q) || a.raw.toLowerCase().includes(q) || a.date.toLowerCase().includes(q);
+        return matchLang && matchTopic && matchSearch;
+      }});
+
+      if (filtered.length === 0) {{
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-muted);">
+          <div style="font-size:36px; margin-bottom:12px;">🍃</div>
+          <h3>Boten wonten renungan ingkang cocog</h3>
+          <p>Cobi gantos tembung kunci utawi saringan tema sanesipun.</p>
+        </div>`;
+        return;
+      }}
+
+      filtered.forEach(a => {{
+        const card = document.createElement('div');
+        card.className = 'article-card';
+        card.onclick = () => openReader(a);
+
+        const langClass = a.lang === 'id' ? 'id' : (a.lang === 'en' ? 'en' : 'jv');
+        const langLabel = a.lang === 'id' ? 'IND' : (a.lang === 'en' ? 'ENG' : 'JAWA');
+
+        const audioIcon = a.audio ? '🔊' : '';
+        const gdocIcon = a.gdoc ? '📄' : '';
+        const posterBadge = a.poster ? `<span class="poster-pill">🖼️ Poster</span>` : '';
+
+        const tagsHtml = a.tags.map(t => `<span class="mini-tag">#${{t}}</span>`).join('');
+
+        card.innerHTML = `
+          <div class="card-meta">
+            <span class="card-date">${{a.date || 'Renungan'}}</span>
+            <div style="display:flex; gap:6px; align-items:center;">
+              ${{posterBadge}}
+              <span class="lang-badge ${{langClass}}">${{langLabel}}</span>
+            </div>
+          </div>
+          <h3 class="card-title">${{a.title}}</h3>
+          <div class="card-book">📖 ${{a.book}}</div>
+          <div class="card-excerpt">"${{a.excerpt || 'Klik kagem maos wedharan jangkep...'}}"</div>
+          <div class="card-footer">
+            <div class="card-tags">${{tagsHtml}}</div>
+            <div class="card-features">${{audioIcon}} ${{gdocIcon}}</div>
+          </div>
+        `;
+        grid.appendChild(card);
+      }});
+    }}
+
+    function openReader(article) {{
+      activeArticle = article;
+      const modal = document.getElementById('readerModal');
+      const content = document.getElementById('modalContent');
+      const dateEl = document.getElementById('modalDate');
+      const langBadge = document.getElementById('modalLangBadge');
+      const gdocBtn = document.getElementById('modalGDocBtn');
+      const audioContainer = document.getElementById('modalAudioContainer');
+      const audioPlayer = document.getElementById('modalAudioPlayer');
+
+      dateEl.innerText = article.date;
+      langBadge.className = 'lang-badge ' + (article.lang === 'id' ? 'id' : (article.lang === 'en' ? 'en' : 'jv'));
+      langBadge.innerText = article.lang === 'id' ? 'INDONESIA' : (article.lang === 'en' ? 'ENGLISH' : 'BASA JAWI');
+
+      if (article.gdoc) {{
+        gdocBtn.href = article.gdoc;
+        gdocBtn.style.display = 'inline-flex';
+      }} else {{
+        gdocBtn.style.display = 'none';
+      }}
+
+      if (article.audio) {{
+        audioPlayer.src = article.audio;
+        audioContainer.style.display = 'block';
+      }} else {{
+        audioPlayer.pause();
+        audioPlayer.src = '';
+        audioContainer.style.display = 'none';
+      }}
+
+      // Seamless Poster Header if Available
+      let posterHtml = '';
+      if (article.poster) {{
+        posterHtml = `
+          <div class="poster-hero">
+            <img src="${{article.poster}}" alt="Infografis Poster" class="poster-img" onclick="openLightbox('${{article.poster}}')">
+            <div class="poster-hint">🔍 Klik gambar poster kagem ningali wutuh / memperbesar</div>
+          </div>
+        `;
+      }}
+
+      // Format markdown to HTML for reader
+      let formatted = article.raw;
+      formatted = formatted.replace(/^_(.*?)_$/gm, '<em>$1</em>');
+      formatted = formatted.replace(/\*([^\*]+)\*/g, '<strong>$1</strong>');
+      formatted = formatted.replace(/_([^_]+)_/g, '<em>$1</em>');
+      
+      const paras = formatted.split('\\n\\n').map(p => {{
+        p = p.trim();
+        if (p.startsWith('<strong>📖') || p.startsWith('<strong>💭') || p.startsWith('<strong>🧘') || p.startsWith('<strong>🎯') || p.startsWith('<strong>📝')) {{
+          return `<h2>${{p}}</h2>`;
+        }}
+        if (p.includes('<em>"<strong>') || p.includes('<em>"*')) {{
+          return `<blockquote>${{p}}</blockquote>`;
+        }}
+        return `<p>${{p.replace(/\\n/g, '<br>')}}</p>`;
+      }}).join('');
+
+      content.innerHTML = posterHtml + paras;
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }}
+
+    function closeModal() {{
+      const modal = document.getElementById('readerModal');
+      const audioPlayer = document.getElementById('modalAudioPlayer');
+      audioPlayer.pause();
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+      activeArticle = null;
+    }}
+
+    function closeModalOnOverlay(e) {{
+      if (e.target.id === 'readerModal') {{
+        closeModal();
+      }}
+    }}
+
+    function openLightbox(src) {{
+      const lb = document.getElementById('lightboxModal');
+      const img = document.getElementById('lightboxImg');
+      img.src = src;
+      lb.classList.add('active');
+    }}
+
+    function closeLightbox() {{
+      const lb = document.getElementById('lightboxModal');
+      lb.classList.remove('active');
+    }}
+
+    function copyWhatsApp() {{
+      if (!activeArticle) return;
+      navigator.clipboard.writeText(activeArticle.raw).then(() => {{
+        showToast("Format WhatsApp kasil kasalin!");
+      }});
+    }}
+
+    function showToast(msg) {{
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }}
+
+    function setLangFilter(lang) {{
+      currentLang = lang;
+      document.querySelectorAll('.lang-tab').forEach(b => {{
+        b.classList.toggle('active', b.dataset.lang === lang);
+      }});
+      renderArticles();
+    }}
+
+    function setTopicFilter(topic) {{
+      currentTopic = topic;
+      document.querySelectorAll('.topic-chip').forEach(c => {{
+        c.classList.toggle('active', c.innerText.includes(topic) || (topic === 'all' && c.innerText.includes('Sedaya')));
+      }});
+      renderArticles();
+    }}
+
+    function filterArticles() {{
+      currentSearch = document.getElementById('searchInput').value;
+      renderArticles();
+    }}
+
+    function toggleTheme() {{
+      const isDark = document.body.dataset.theme === 'dark';
+      document.body.dataset.theme = isDark ? 'light' : 'dark';
+      document.getElementById('themeIcon').innerText = isDark ? '🌙' : '☀️';
+      document.getElementById('themeText').innerText = isDark ? 'Dark' : 'Light';
+      localStorage.setItem('pustaka_theme', isDark ? 'light' : 'dark');
+    }}
+
+    // Init Theme
+    const savedTheme = localStorage.getItem('pustaka_theme') || 'light';
+    if (savedTheme === 'dark') {{
+      document.body.dataset.theme = 'dark';
+      document.getElementById('themeIcon').innerText = '☀️';
+      document.getElementById('themeText').innerText = 'Light';
+    }}
+
+    // Init render
+    renderArticles();
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {{
+      if (e.key === 'Escape') {{
+        if (document.getElementById('lightboxModal').classList.contains('active')) {{
+          closeLightbox();
+        }} else {{
+          closeModal();
+        }}
+      }}
+      if (e.key === '/' && document.activeElement !== document.getElementById('searchInput')) {{
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+      }}
+    }});
+  </script>
+</body>
+</html>
+"""
+
+    with open(os.path.join(pustaka_dir, "index.html"), "w", encoding="utf-8") as f:
+        f.write(html_template)
+    print("Build successful.")
+
+if __name__ == "__main__":
+    update_library_with_posters()
