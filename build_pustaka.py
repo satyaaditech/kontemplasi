@@ -1008,8 +1008,7 @@ def build_strict_pustaka():
   <!-- FOOTER -->
   <footer>
     <div class="container">
-      <p>© 2026 Pustaka Penyiswaan • Sinox Assistant kagem Pak Satya Adi Dharma</p>
-      <p style="margin-top:4px; font-size:11px; opacity:0.8;">Ajaran Sang Guru Sejati • Kasimpen Murni wonten ing GitHub Pages</p>
+      <p>© 2026 Pustaka Penyiswaan</p>
     </div>
   </footer>
 
