@@ -265,6 +265,7 @@ def build_clean_pustaka():
 
         deduped_articles.append({
             "id": gid,
+            "group_id": gid,
             "date_iso": primary["date_iso"],
             "date": primary["date_str"],
             "title": primary["title"],
@@ -1241,10 +1242,13 @@ def build_clean_pustaka():
       const langSwitcher = document.getElementById('modalLangSwitcher');
 
       // Update URL Hash for direct deep-linking
-      if (history.replaceState) {{
-        history.replaceState(null, '', '#' + encodeURIComponent(article.group_id));
-      }} else {{
-        window.location.hash = encodeURIComponent(article.group_id);
+      const gid = article.group_id || article.id;
+      if (gid) {{
+        if (history.replaceState) {{
+          history.replaceState(null, '', '#' + encodeURIComponent(gid));
+        }} else {{
+          window.location.hash = encodeURIComponent(gid);
+        }}
       }}
 
       if (preferredLang && article.versions[preferredLang]) {{
@@ -1396,7 +1400,8 @@ def build_clean_pustaka():
       if (!activeArticle) return;
       const v = activeArticle.versions[currentActiveLang] || Object.values(activeArticle.versions)[0];
       const title = v ? v.title.replace(/[*#_~`]/g, '').trim() : 'Pustaka Kontemplasi';
-      const shareUrl = window.location.origin + window.location.pathname + '#' + encodeURIComponent(activeArticle.group_id);
+      const gid = activeArticle.group_id || activeArticle.id || 'article';
+      const shareUrl = window.location.origin + window.location.pathname + '#' + encodeURIComponent(gid);
 
       if (navigator.share) {{
         navigator.share({{
