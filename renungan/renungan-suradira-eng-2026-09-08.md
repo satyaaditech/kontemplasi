@@ -43,6 +43,6 @@ True strength lies not in the ability to retaliate and subdue others, but in the
 🙏 May we all remain under the Guidance, Protection, and Loving Grace of the True Teacher. Satuhu. 🙏
 
 Digital Library & Document Links:
-• Video YouTube: https://youtu.be/gcUxGDiUSeI
+• Video YouTube: https://youtu.be/T2uXKL838ow
 • Web Kontemplasi: https://kontemplasi.satyaaditech.web.id/
 • Google Doc: https://docs.google.com/document/d/1cKS7DojtbQHXya_HGNpPppuZrysKR3sgFoCyzxLFC3M/edit
