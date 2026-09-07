@@ -6,7 +6,7 @@ import json
 import re
 import shutil
 import subprocess
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 PORT = 8088
@@ -850,7 +850,7 @@ HTML_ADMIN = """<!DOCTYPE html>
     }
 
     function createNewEntry() {
-      const catChoice = prompt('Pilih Kategori Tulisan:\n1 = 🌅 Renungan Harian\n2 = ✍️ Esai Kontemplasi\n3 = 👥 Reader’s Voice (Kiriman Pembaca)\n4 = 📜 Ulasan Serat', '1');
+      const catChoice = prompt('Pilih Kategori Tulisan:\\\\n1 = 🌅 Renungan Harian\\\\n2 = ✍️ Esai Kontemplasi\\\\n3 = 👥 Reader’s Voice (Kiriman Pembaca)\\\\n4 = 📜 Ulasan Serat', '1');
       if (!catChoice) return;
       
       let cat = 'renungan-harian';
@@ -1255,7 +1255,7 @@ class AdminHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(data, ensure_ascii=False).encode("utf-8"))
 
 def run():
-    server = HTTPServer(("0.0.0.0", PORT), AdminHandler)
+    server = ThreadingHTTPServer(("0.0.0.0", PORT), AdminHandler)
     print(f"Admin Portal running on http://0.0.0.0:{PORT}")
     server.serve_forever()
 
