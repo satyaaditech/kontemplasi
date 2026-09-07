@@ -1,69 +1,106 @@
 import os
+import shutil
 import glob
 import re
 import json
 
-def update_library_with_posters():
+def build_deduped_pustaka():
     renungan_dir = "/home/satyaaditech/kontemplasi/renungan"
     pustaka_dir = "/home/satyaaditech/kontemplasi"
     os.makedirs(pustaka_dir, exist_ok=True)
 
-    md_files = sorted(glob.glob(os.path.join(renungan_dir, "*.md")), reverse=True)
-    articles = []
+    md_files = sorted(glob.glob(os.path.join(renungan_dir, "*.md")))
 
     def clean_stars(text):
         if not text:
             return ""
-        return re.sub(r'^\*+|\*+$', '', text.strip()).strip()
+        t = re.sub(r'^\*+|\*+$', '', text.strip()).strip()
+        t = re.sub(r'^title:\s*["\']?', '', t)
+        t = re.sub(r'["\']?$', '', t)
+        return t.strip()
 
+    def parse_date(fname, raw_text):
+        m = re.search(r'(\d{4}-\d{2}-\d{2})', fname)
+        if m:
+            return m.group(1)
+        m = re.search(r'(\d{1,2})-agustus-(\d{4})', fname, re.IGNORECASE)
+        if m:
+            day = int(m.group(1))
+            year = m.group(2)
+            return f"{year}-08-{day:02d}"
+        months = {
+            'januari': '01', 'februari': '02', 'maret': '03', 'april': '04',
+            'mei': '05', 'juni': '06', 'juli': '07', 'agustus': '08',
+            'september': '09', 'oktober': '10', 'november': '11', 'desember': '12',
+            'january': '01', 'february': '02', 'march': '03', 'may': '05',
+            'june': '06', 'july': '07', 'august': '08', 'october': '10', 'december': '12'
+        }
+        m = re.search(r'(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})', raw_text)
+        if m:
+            day = int(m.group(1))
+            mon_str = m.group(2).lower()
+            year = m.group(3)
+            if mon_str in months:
+                return f"{year}-{months[mon_str]}-{day:02d}"
+        return "2026-08-01"
+
+    parsed_files = []
     for fpath in md_files:
         fname = os.path.basename(fpath)
         with open(fpath, "r", encoding="utf-8") as f:
-            raw_text = f.read()
+            raw = f.read()
 
-        # Language detection
+        date_iso = parse_date(fname, raw)
+
+        # Detect lang
         lang = "jv"
-        if "-ind-" in fname or "-ind." in fname or "ind" in fname.lower() and not "pindha" in fname:
+        if "-ind" in fname or "ind" in fname.lower() and not "pindha" in fname:
             lang = "id"
-        elif "-eng-" in fname or "-eng." in fname:
+        elif "-eng" in fname:
             lang = "en"
-        elif "kamardikan-ind" in fname or "mengampuni-ind" in fname:
+        if "*SABDA HARI INI" in raw or "*URAIAN" in raw or "Salam Bahagia" in raw:
             lang = "id"
-        elif "mengampuni-eng" in fname:
+        elif "*DAILY SCRIPTURE" in raw or "*EXPOSITION" in raw:
             lang = "en"
-        
-        if "*SABDA HARI INI" in raw_text or "Salam Bahagia" in raw_text or "*URAIAN" in raw_text:
-            lang = "id"
-        elif "*DAILY SCRIPTURE" in raw_text or "Greetings of Peace" in raw_text or "*EXPOSITION" in raw_text:
-            lang = "en"
-        elif "*PETHIKAN DINTEN" in raw_text or "Sugeng Enjang" in raw_text or "*ANDHARAN" in raw_text:
+        elif "*PETHIKAN DINTEN" in raw or "*ANDHARAN" in raw:
             lang = "jv"
 
-        # Date
-        date_match = re.search(r'^\*([A-Z\s,0-9]+)\*', raw_text, re.MULTILINE)
-        date_str = date_match.group(1).strip() if date_match else ""
-        date_iso = ""
-        d_match = re.search(r'(\d{4}-\d{2}-\d{2})', fname)
-        if d_match:
-            date_iso = d_match.group(1)
-        if not date_str:
-            date_str = date_iso
+        # Topic normalization
+        stem = fname.replace("renungan-", "").replace(".md", "")
+        core_topic = re.sub(r'-\d{4}-\d{2}-\d{2}', '', stem)
+        core_topic = re.sub(r'-\d+-agustus-\d{4}', '', core_topic)
+        core_topic = re.sub(r'-(?:ind|eng|jv)$', '', core_topic)
+        core_topic = re.sub(r'-(?:v\d+|ronde\d+)$', '', core_topic)
+        core_topic = re.sub(r'-(?:selasa|senin|rabu|kamis|jumat|sabtu|minggu)', '', core_topic)
 
-        # Title
+        # Version rank (for choosing best draft)
+        v_rank = 1
+        if "-v6" in fname: v_rank = 6
+        elif "-v5" in fname: v_rank = 5
+        elif "-v4" in fname: v_rank = 4
+        elif "-v3" in fname: v_rank = 3
+        elif "-v2" in fname: v_rank = 2
+        elif "ronde2" in fname: v_rank = 2
+
+        # Extract title
         title = ""
-        lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
-        for l in lines[1:5]:
-            if "RENUNGAN" not in l and not l.startswith("_Salam") and not l.startswith("_Sugeng") and not l.startswith("_Greetings"):
+        lines = [l.strip() for l in raw.splitlines() if l.strip()]
+        for l in lines[1:6]:
+            if "RENUNGAN" not in l and not l.startswith("_Salam") and not l.startswith("_Sugeng") and not l.startswith("_Greetings") and not l.startswith("---"):
                 title = clean_stars(l)
-                break
+                if title: break
         if not title:
-            title = fname.replace(".md", "").replace("renungan-", "").replace("-", " ").title()
+            title = core_topic.replace("-", " ").title()
 
-        # Google Doc URL
-        gdoc_match = re.search(r'https://docs\.google\.com/document/d/([a-zA-Z0-9_-]+)(?:/edit)?', raw_text)
+        # Date string formatted
+        date_match = re.search(r'^\*([A-Z\s,0-9]+)\*', raw, re.MULTILINE)
+        date_str = date_match.group(1).strip() if date_match else date_iso
+
+        # GDoc
+        gdoc_match = re.search(r'https://docs\.google\.com/document/d/([a-zA-Z0-9_-]+)(?:/edit)?', raw)
         gdoc_url = gdoc_match.group(0) if gdoc_match else ""
 
-        # Audio file
+        # Audio
         base_no_ext = os.path.splitext(fname)[0]
         audio_file = ""
         for ext in [".ogg", ".mp3"]:
@@ -74,27 +111,21 @@ def update_library_with_posters():
 
         # Poster / Infographic / Cover Image Detection
         poster_file = ""
-        stem = fname.replace("renungan-", "").replace(".md", "")
-        core_stem = re.sub(r'-(?:ind|eng)$', '', stem)
-        
         candidates = [
-            f"poster-{core_stem}.jpg", f"poster-{core_stem}.png",
-            f"infografis-{core_stem}.png", f"infografis_{core_stem}.png",
-            f"cover-{core_stem}.png", f"cover-{stem}.png",
+            f"poster-{core_topic}.jpg", f"poster-{core_topic}.png",
+            f"infografis-{core_topic}.png", f"infografis_{core_topic}.png",
+            f"cover-{core_topic}.png", f"cover-{stem}.png",
             f"poster-{stem}.jpg", f"poster-{stem}.png",
-            f"newsletter-{core_stem}-A4-2026-08-25.png"
+            f"poster-teladan-{date_iso}.jpg",
+            f"infografis-budi-darma-{date_iso}.png",
+            f"cover-sabar-momot-{date_iso}.png",
+            f"cover-ngunjara-hawa-napsu-{date_iso}.png",
+            f"cover-kamardikan-{date_iso}.png",
+            f"cover-sokur-{date_iso}.png",
+            f"cover-sumelang-{date_iso}.png",
+            f"cover-narima-2026-08-15-v3.png",
+            f"cover-rela-2026-08-15.png"
         ]
-        if date_iso:
-            candidates.extend([
-                f"poster-teladan-{date_iso}.jpg",
-                f"infografis-budi-darma-{date_iso}.png",
-                f"cover-sabar-momot-{date_iso}.png",
-                f"cover-ngunjara-hawa-napsu-{date_iso}.png",
-                f"cover-kamardikan-{date_iso}.png",
-                f"cover-sokur-{date_iso}.png",
-                f"cover-sumelang-{date_iso}.png"
-            ])
-
         for cand in candidates:
             if os.path.exists(os.path.join(renungan_dir, cand)):
                 poster_file = f"renungan/{cand}"
@@ -102,24 +133,24 @@ def update_library_with_posters():
 
         # Book source
         book_source = "Sasangka Jati"
-        if "BRSR" in raw_text or "Bawa Raos" in raw_text:
+        if "BRSR" in raw or "Bawa Raos" in raw:
             book_source = "Bawa Raos (BRSR)"
-        elif "Sabda Khusus" in raw_text or "SKH" in raw_text:
+        elif "Sabda Khusus" in raw or "SKH" in raw:
             book_source = "Sabda Khusus (SKH)"
-        elif "TKL" in raw_text or "Taman Kamulyan" in raw_text:
+        elif "TKL" in raw or "Taman Kamulyan" in raw:
             book_source = "Taman Kamulyan (TKL)"
-        elif "UUJM" in raw_text or "Ular-Ular" in raw_text:
+        elif "UUJM" in raw or "Ular-Ular" in raw:
             book_source = "Ular-Ular (UUJM)"
-        elif "Hasta Sila" in raw_text:
+        elif "Hasta Sila" in raw:
             book_source = "Sasangka Jati (Hasta Sila)"
-        elif "Tunggal Sabda" in raw_text:
+        elif "Tunggal Sabda" in raw:
             book_source = "Sasangka Jati (Tunggal Sabda)"
-        elif "Panembah" in raw_text:
+        elif "Panembah" in raw:
             book_source = "Sasangka Jati (Panembah)"
 
         # Excerpt
         sabda_excerpt = ""
-        sabda_match = re.search(r'(?:PETHIKAN DINTEN PUNIKA|SABDA HARI INI|DAILY SCRIPTURE)\s*:\s*\n*(.*?)(?=\n\s*(?:Terjemahan|Translation|💭|\*ANDHARAN|\*URAIAN|\*EXPOSITION|$))', raw_text, re.DOTALL | re.IGNORECASE)
+        sabda_match = re.search(r'(?:PETHIKAN DINTEN PUNIKA|SABDA HARI INI|DAILY SCRIPTURE)\s*:\s*\n*(.*?)(?=\n\s*(?:Terjemahan|Translation|💭|\*ANDHARAN|\*URAIAN|\*EXPOSITION|$))', raw, re.DOTALL | re.IGNORECASE)
         if sabda_match:
             sabda_excerpt = sabda_match.group(1).strip()
             sabda_excerpt = re.sub(r'[*_"]', '', sabda_excerpt)
@@ -133,27 +164,85 @@ def update_library_with_posters():
             ("lisan", "Lisan"), ("eling", "Eling"), ("hawa napsu", "Hawa Nafsu"), ("nafsu", "Hawa Nafsu"),
             ("panembah", "Panembah"), ("sukma", "Kasukman"), ("kamardikan", "Kamardikan"),
             ("merdeka", "Kamardikan"), ("beban", "Katentreman"), ("sumelang", "Piandel"),
-            ("teladan", "Keteladanan")
+            ("teladan", "Keteladanan"), ("budi darma", "Budi Darma")
         ]:
-            if kw in raw_text.lower() and tag not in tags:
+            if kw in raw.lower() and tag not in tags:
                 tags.append(tag)
 
-        articles.append({
-            "id": fname,
-            "filename": fname,
-            "title": title,
-            "date": date_str,
+        parsed_files.append({
+            "fname": fname,
+            "date_iso": date_iso,
+            "date_str": date_str,
+            "core_topic": core_topic,
+            "group_id": f"{date_iso}_{core_topic}",
             "lang": lang,
+            "v_rank": v_rank,
+            "title": title,
             "book": book_source,
             "tags": tags[:4],
             "gdoc": gdoc_url,
             "audio": audio_file,
             "poster": poster_file,
             "excerpt": sabda_excerpt,
-            "raw": raw_text
+            "raw": raw
         })
 
-    articles_json_str = json.dumps(articles, ensure_ascii=False)
+    # Group into deduplicated entries
+    groups = {}
+    for pf in parsed_files:
+        gid = pf["group_id"]
+        if gid not in groups:
+            groups[gid] = []
+        groups[gid].append(pf)
+
+    deduped_articles = []
+    for gid, files in groups.items():
+        files.sort(key=lambda x: x["v_rank"], reverse=True)
+        
+        versions = {}
+        for f in files:
+            l = f["lang"]
+            if l not in versions:
+                versions[l] = f
+        
+        primary = versions.get("id") or versions.get("jv") or versions.get("en") or files[0]
+
+        poster = next((f["poster"] for f in files if f["poster"]), "")
+        audio = next((f["audio"] for f in files if f["audio"]), "")
+        gdoc = next((f["gdoc"] for f in files if f["gdoc"]), "")
+
+        available_langs = sorted(list(versions.keys()))
+
+        versions_payload = {}
+        for l, item in versions.items():
+            versions_payload[l] = {
+                "title": item["title"],
+                "date": item["date_str"],
+                "gdoc": item["gdoc"] or gdoc,
+                "audio": item["audio"] or audio,
+                "raw": item["raw"]
+            }
+
+        deduped_articles.append({
+            "id": gid,
+            "date_iso": primary["date_iso"],
+            "date": primary["date_str"],
+            "title": primary["title"],
+            "book": primary["book"],
+            "tags": primary["tags"],
+            "excerpt": primary["excerpt"],
+            "poster": poster,
+            "audio": audio,
+            "gdoc": gdoc,
+            "primary_lang": primary["lang"],
+            "available_langs": available_langs,
+            "versions": versions_payload
+        })
+
+    # STRICT SORT: NEWEST FIRST (latest date at the top)
+    deduped_articles.sort(key=lambda x: x["date_iso"], reverse=True)
+
+    articles_json_str = json.dumps(deduped_articles, ensure_ascii=False)
 
     html_template = f"""<!DOCTYPE html>
 <html lang="id">
@@ -461,13 +550,19 @@ def update_library_with_posters():
 
     .card-date {{
       color: var(--text-muted);
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.02em;
+    }}
+
+    .lang-pills {{
+      display: flex;
+      gap: 4px;
+      align-items: center;
     }}
 
     .lang-badge {{
       display: inline-block;
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 4px;
       font-size: 11px;
       font-weight: 700;
@@ -582,7 +677,7 @@ def update_library_with_posters():
     }}
 
     .reader-header {{
-      padding: 16px 24px;
+      padding: 14px 20px;
       border-bottom: 1px solid var(--surface-border);
       display: flex;
       align-items: center;
@@ -591,12 +686,41 @@ def update_library_with_posters():
       position: sticky;
       top: 0;
       z-index: 10;
+      gap: 12px;
+      flex-wrap: wrap;
     }}
 
     .reader-title-area {{
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
+    }}
+
+    .reader-lang-switcher {{
+      display: flex;
+      background: var(--bg);
+      padding: 3px;
+      border-radius: 8px;
+      gap: 3px;
+      border: 1px solid var(--surface-border);
+    }}
+
+    .reader-lang-btn {{
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }}
+
+    .reader-lang-btn.active {{
+      background: var(--primary);
+      color: white;
     }}
 
     .reader-actions {{
@@ -687,7 +811,7 @@ def update_library_with_posters():
     }}
 
     .reader-body {{
-      padding: 32px 36px;
+      padding: 28px 36px 40px;
       overflow-y: auto;
       font-family: var(--font-serif);
       font-size: 16px;
@@ -727,7 +851,7 @@ def update_library_with_posters():
       margin-bottom: 8px;
     }}
 
-    /* LIGHTBOX FOR FULL POSTER INSPECTION */
+    /* LIGHTBOX */
     .lightbox-overlay {{
       position: fixed;
       inset: 0;
@@ -815,7 +939,7 @@ def update_library_with_posters():
     <!-- HERO SECTION -->
     <section class="hero">
       <h2>Arsip & Renungan Olah Rasa</h2>
-      <p>Kumpulan pethikan sabda, ulasan panyuraos batin, sarta tuntunan laku padintenan ingkang katata jangkep lan murni.</p>
+      <p>Kumpulan pethikan sabda murni, ulasan panyuraos batin, sarta tuntunan laku padintenan ingkang katata jangkep lan runtut.</p>
       
       <!-- SEARCH INPUT -->
       <div class="search-container">
@@ -827,7 +951,7 @@ def update_library_with_posters():
     <!-- FILTER BAR -->
     <section class="filter-bar">
       <div class="lang-tabs">
-        <button class="lang-tab active" data-lang="all" onclick="setLangFilter('all')">Sedaya ({len(articles)})</button>
+        <button class="lang-tab active" data-lang="all" onclick="setLangFilter('all')">Sedaya ({len(deduped_articles)})</button>
         <button class="lang-tab" data-lang="id" onclick="setLangFilter('id')">🇮🇩 Indonesia</button>
         <button class="lang-tab" data-lang="jv" onclick="setLangFilter('jv')">ꦗꦮ Basa Jawi</button>
         <button class="lang-tab" data-lang="en" onclick="setLangFilter('en')">🇬🇧 English</button>
@@ -856,8 +980,10 @@ def update_library_with_posters():
     <div class="reader-modal">
       <div class="reader-header">
         <div class="reader-title-area">
-          <span class="lang-badge" id="modalLangBadge">ID</span>
-          <span id="modalDate" style="font-size:13px; font-weight:600; color:var(--text-muted);"></span>
+          <div class="reader-lang-switcher" id="modalLangSwitcher">
+            <!-- Dynamic language buttons (ID/JV/EN) -->
+          </div>
+          <span id="modalDate" style="font-size:13px; font-weight:700; color:var(--text-muted);"></span>
         </div>
         <div class="reader-actions">
           <button class="btn btn-primary" onclick="copyWhatsApp()">📋 Salin WA</button>
@@ -889,7 +1015,7 @@ def update_library_with_posters():
   <footer>
     <div class="container">
       <p>© 2026 Pustaka Penyiswaan • Sinox Assistant kagem Pak Satya Adi Dharma</p>
-      <p style="margin-top:4px; font-size:11px; opacity:0.8;">Ajaran Sang Guru Sejati • Kasimpen Murni wonten ing n8nserver</p>
+      <p style="margin-top:4px; font-size:11px; opacity:0.8;">Ajaran Sang Guru Sejati • Kasimpen Murni wonten ing GitHub Pages</p>
     </div>
   </footer>
 
@@ -901,23 +1027,33 @@ def update_library_with_posters():
     let currentTopic = 'all';
     let currentSearch = '';
     let activeArticle = null;
+    let currentActiveLang = 'id';
 
     function renderArticles() {{
       const grid = document.getElementById('articlesGrid');
       grid.innerHTML = '';
 
       const filtered = articlesData.filter(a => {{
-        const matchLang = (currentLang === 'all' || a.lang === currentLang);
+        const matchLang = (currentLang === 'all' || a.available_langs.includes(currentLang));
         const matchTopic = (currentTopic === 'all' || a.tags.includes(currentTopic) || a.book.includes(currentTopic));
         const q = currentSearch.toLowerCase().trim();
-        const matchSearch = !q || a.title.toLowerCase().includes(q) || a.raw.toLowerCase().includes(q) || a.date.toLowerCase().includes(q);
+        
+        let matchSearch = !q || a.title.toLowerCase().includes(q) || a.date.toLowerCase().includes(q) || a.excerpt.toLowerCase().includes(q);
+        if (!matchSearch) {{
+          for (const l in a.versions) {{
+            if (a.versions[l].raw.toLowerCase().includes(q)) {{
+              matchSearch = true;
+              break;
+            }}
+          }}
+        }}
         return matchLang && matchTopic && matchSearch;
       }});
 
       if (filtered.length === 0) {{
         grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-muted);">
           <div style="font-size:36px; margin-bottom:12px;">🍃</div>
-          <h3>Boten wonten renungan ingkang cocog</h3>
+          <h3>Boten wonten materi ingkang cocog</h3>
           <p>Cobi gantos tembung kunci utawi saringan tema sanesipun.</p>
         </div>`;
         return;
@@ -928,8 +1064,11 @@ def update_library_with_posters():
         card.className = 'article-card';
         card.onclick = () => openReader(a);
 
-        const langClass = a.lang === 'id' ? 'id' : (a.lang === 'en' ? 'en' : 'jv');
-        const langLabel = a.lang === 'id' ? 'IND' : (a.lang === 'en' ? 'ENG' : 'JAWA');
+        const langPillsHtml = a.available_langs.map(l => {{
+          const lClass = l === 'id' ? 'id' : (l === 'en' ? 'en' : 'jv');
+          const lLabel = l === 'id' ? 'ID' : (l === 'en' ? 'ENG' : 'JAWA');
+          return `<span class="lang-badge ${{lClass}}">${{lLabel}}</span>`;
+        }}).join('');
 
         const audioIcon = a.audio ? '🔊' : '';
         const gdocIcon = a.gdoc ? '📄' : '';
@@ -939,10 +1078,10 @@ def update_library_with_posters():
 
         card.innerHTML = `
           <div class="card-meta">
-            <span class="card-date">${{a.date || 'Renungan'}}</span>
+            <span class="card-date">${{a.date || a.date_iso}}</span>
             <div style="display:flex; gap:6px; align-items:center;">
               ${{posterBadge}}
-              <span class="lang-badge ${{langClass}}">${{langLabel}}</span>
+              <div class="lang-pills">${{langPillsHtml}}</div>
             </div>
           </div>
           <h3 class="card-title">${{a.title}}</h3>
@@ -957,29 +1096,71 @@ def update_library_with_posters():
       }});
     }}
 
-    function openReader(article) {{
+    function openReader(article, preferredLang) {{
       activeArticle = article;
       const modal = document.getElementById('readerModal');
+      const langSwitcher = document.getElementById('modalLangSwitcher');
+
+      if (preferredLang && article.versions[preferredLang]) {{
+        currentActiveLang = preferredLang;
+      }} else if (currentLang !== 'all' && article.versions[currentLang]) {{
+        currentActiveLang = currentLang;
+      }} else if (article.versions['id']) {{
+        currentActiveLang = 'id';
+      }} else if (article.versions['jv']) {{
+        currentActiveLang = 'jv';
+      }} else {{
+        currentActiveLang = article.available_langs[0];
+      }}
+
+      langSwitcher.innerHTML = '';
+      article.available_langs.forEach(l => {{
+        const btn = document.createElement('button');
+        btn.className = 'reader-lang-btn' + (l === currentActiveLang ? ' active' : '');
+        btn.innerText = l === 'id' ? '🇮🇩 Indonesia' : (l === 'en' ? '🇬🇧 English' : 'ꦗꦮ Basa Jawi');
+        btn.onclick = () => switchReaderLang(l);
+        langSwitcher.appendChild(btn);
+      }});
+
+      renderReaderContent();
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }}
+
+    function switchReaderLang(lang) {{
+      if (!activeArticle || !activeArticle.versions[lang]) return;
+      currentActiveLang = lang;
+      document.querySelectorAll('.reader-lang-btn').forEach(btn => {{
+        const isMatch = (lang === 'id' && btn.innerText.includes('Indonesia')) ||
+                        (lang === 'en' && btn.innerText.includes('English')) ||
+                        (lang === 'jv' && btn.innerText.includes('Basa Jawi'));
+        btn.classList.toggle('active', isMatch);
+      }});
+      renderReaderContent();
+    }}
+
+    function renderReaderContent() {{
+      if (!activeArticle) return;
+      const v = activeArticle.versions[currentActiveLang];
       const content = document.getElementById('modalContent');
       const dateEl = document.getElementById('modalDate');
-      const langBadge = document.getElementById('modalLangBadge');
       const gdocBtn = document.getElementById('modalGDocBtn');
       const audioContainer = document.getElementById('modalAudioContainer');
       const audioPlayer = document.getElementById('modalAudioPlayer');
 
-      dateEl.innerText = article.date;
-      langBadge.className = 'lang-badge ' + (article.lang === 'id' ? 'id' : (article.lang === 'en' ? 'en' : 'jv'));
-      langBadge.innerText = article.lang === 'id' ? 'INDONESIA' : (article.lang === 'en' ? 'ENGLISH' : 'BASA JAWI');
+      dateEl.innerText = v.date || activeArticle.date;
 
-      if (article.gdoc) {{
-        gdocBtn.href = article.gdoc;
+      const gdocLink = v.gdoc || activeArticle.gdoc;
+      if (gdocLink) {{
+        gdocBtn.href = gdocLink;
         gdocBtn.style.display = 'inline-flex';
       }} else {{
         gdocBtn.style.display = 'none';
       }}
 
-      if (article.audio) {{
-        audioPlayer.src = article.audio;
+      const audioSrc = v.audio || activeArticle.audio;
+      if (audioSrc) {{
+        audioPlayer.src = audioSrc;
         audioContainer.style.display = 'block';
       }} else {{
         audioPlayer.pause();
@@ -987,21 +1168,19 @@ def update_library_with_posters():
         audioContainer.style.display = 'none';
       }}
 
-      // Seamless Poster Header if Available
       let posterHtml = '';
-      if (article.poster) {{
+      if (activeArticle.poster) {{
         posterHtml = `
           <div class="poster-hero">
-            <img src="${{article.poster}}" alt="Infografis Poster" class="poster-img" onclick="openLightbox('${{article.poster}}')">
+            <img src="${{activeArticle.poster}}" alt="Infografis Poster" class="poster-img" onclick="openLightbox('${{activeArticle.poster}}')">
             <div class="poster-hint">🔍 Klik gambar poster kagem ningali wutuh / memperbesar</div>
           </div>
         `;
       }}
 
-      // Format markdown to HTML for reader
-      let formatted = article.raw;
+      let formatted = v.raw;
       formatted = formatted.replace(/^_(.*?)_$/gm, '<em>$1</em>');
-      formatted = formatted.replace(/\*([^\*]+)\*/g, '<strong>$1</strong>');
+      formatted = formatted.replace(/\\*([^\\*]+)\\*/g, '<strong>$1</strong>');
       formatted = formatted.replace(/_([^_]+)_/g, '<em>$1</em>');
       
       const paras = formatted.split('\\n\\n').map(p => {{
@@ -1016,8 +1195,6 @@ def update_library_with_posters():
       }}).join('');
 
       content.innerHTML = posterHtml + paras;
-      modal.classList.add('active');
-      document.body.style.overflow = 'hidden';
     }}
 
     function closeModal() {{
@@ -1049,7 +1226,8 @@ def update_library_with_posters():
 
     function copyWhatsApp() {{
       if (!activeArticle) return;
-      navigator.clipboard.writeText(activeArticle.raw).then(() => {{
+      const v = activeArticle.versions[currentActiveLang];
+      navigator.clipboard.writeText(v.raw).then(() => {{
         showToast("Format WhatsApp kasil kasalin!");
       }});
     }}
@@ -1090,7 +1268,6 @@ def update_library_with_posters():
       localStorage.setItem('pustaka_theme', isDark ? 'light' : 'dark');
     }}
 
-    // Init Theme
     const savedTheme = localStorage.getItem('pustaka_theme') || 'light';
     if (savedTheme === 'dark') {{
       document.body.dataset.theme = 'dark';
@@ -1098,10 +1275,8 @@ def update_library_with_posters():
       document.getElementById('themeText').innerText = 'Light';
     }}
 
-    // Init render
     renderArticles();
 
-    // Keyboard shortcuts
     window.addEventListener('keydown', (e) => {{
       if (e.key === 'Escape') {{
         if (document.getElementById('lightboxModal').classList.contains('active')) {{
@@ -1122,7 +1297,9 @@ def update_library_with_posters():
 
     with open(os.path.join(pustaka_dir, "index.html"), "w", encoding="utf-8") as f:
         f.write(html_template)
-    print("Build successful.")
+    
+    shutil.copy(os.path.join(pustaka_dir, "index.html"), "/home/satyaaditech/share/pustaka/index.html")
+    print("Deduplicated & Chronologically Sorted Pustaka built successfully.")
 
 if __name__ == "__main__":
-    update_library_with_posters()
+    build_deduped_pustaka()
