@@ -1092,6 +1092,7 @@ def build_clean_pustaka():
           <span id="modalDate" style="font-size:13px; font-weight:700; color:var(--text-muted);"></span>
         </div>
         <div class="reader-actions">
+          <button class="btn btn-secondary" onclick="shareArticle()">🔗 Bagikan</button>
           <button class="btn btn-primary" onclick="copyWhatsApp()">📋 Salin WA</button>
           <a id="modalGDocBtn" href="#" target="_blank" class="btn btn-secondary" style="display:none;">📄 Google Doc</a>
           <button class="btn-close" onclick="closeModal()">✕</button>
@@ -1229,10 +1230,22 @@ def build_clean_pustaka():
       }});
     }}
 
-    function openReader(article, preferredLang) {{
+    function openReader(articleOrId, preferredLang) {{
+      let article = articleOrId;
+      if (typeof articleOrId === 'string') {{
+        article = articlesData.find(a => a.group_id === articleOrId || a.id === articleOrId || (a.versions && Object.values(a.versions).some(v => v.fname === articleOrId)));
+      }}
+      if (!article) return;
       activeArticle = article;
       const modal = document.getElementById('readerModal');
       const langSwitcher = document.getElementById('modalLangSwitcher');
+
+      // Update URL Hash for direct deep-linking
+      if (history.replaceState) {{
+        history.replaceState(null, '', '#' + encodeURIComponent(article.group_id));
+      }} else {{
+        window.location.hash = encodeURIComponent(article.group_id);
+      }}
 
       if (preferredLang && article.versions[preferredLang]) {{
         currentActiveLang = preferredLang;
@@ -1352,10 +1365,13 @@ def build_clean_pustaka():
     function closeModal() {{
       const modal = document.getElementById('readerModal');
       const audioPlayer = document.getElementById('modalAudioPlayer');
-      audioPlayer.pause();
+      if (audioPlayer) audioPlayer.pause();
       modal.classList.remove('active');
       document.body.style.overflow = '';
       activeArticle = null;
+      if (history.replaceState) {{
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }}
     }}
 
     function closeModalOnOverlay(e) {{
@@ -1376,9 +1392,38 @@ def build_clean_pustaka():
       lb.classList.remove('active');
     }}
 
+    function shareArticle() {{
+      if (!activeArticle) return;
+      const v = activeArticle.versions[currentActiveLang] || Object.values(activeArticle.versions)[0];
+      const title = v ? v.title.replace(/[*#_~`]/g, '').trim() : 'Pustaka Kontemplasi';
+      const shareUrl = window.location.origin + window.location.pathname + '#' + encodeURIComponent(activeArticle.group_id);
+
+      if (navigator.share) {{
+        navigator.share({{
+          title: title,
+          text: `Waos naskah "${{title}}" wonten ing Pustaka Kontemplasi:`,
+          url: shareUrl
+        }}).catch(err => {{
+          if (err.name !== 'AbortError') {{
+            copyDirectUrl(shareUrl);
+          }}
+        }});
+      }} else {{
+        copyDirectUrl(shareUrl);
+      }}
+    }}
+
+    function copyDirectUrl(url) {{
+      navigator.clipboard.writeText(url).then(() => {{
+        showToast("🔗 Tautan artikel kasil kasalin!");
+      }}).catch(() => {{
+        prompt("Salin tautan artikel menika:", url);
+      }});
+    }}
+
     function copyWhatsApp() {{
       if (!activeArticle) return;
-      const v = activeArticle.versions[currentActiveLang];
+      const v = activeArticle.versions[currentActiveLang] || Object.values(activeArticle.versions)[0];
       navigator.clipboard.writeText(v.raw).then(() => {{
         showToast("Format WhatsApp kasil kasalin!");
       }});
@@ -1427,7 +1472,22 @@ def build_clean_pustaka():
       document.getElementById('themeText').innerText = 'Light';
     }}
 
+    function checkDeepLink() {{
+      const rawHash = window.location.hash ? window.location.hash.substring(1) : '';
+      if (!rawHash) return;
+      const targetId = decodeURIComponent(rawHash);
+      const article = articlesData.find(a => a.group_id === targetId || a.id === targetId || (a.versions && Object.values(a.versions).some(v => v.fname === targetId)));
+      if (article) {{
+        if (currentCategory !== 'all' && article.category && currentCategory !== article.category) {{
+          setCat('all');
+        }}
+        openReader(article);
+      }}
+    }}
+
     renderArticles();
+    checkDeepLink();
+    window.addEventListener('hashchange', checkDeepLink);
 
     window.addEventListener('keydown', (e) => {{
       if (e.key === 'Escape') {{
