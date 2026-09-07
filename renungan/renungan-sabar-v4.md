@@ -1,3 +1,7 @@
+---
+status: published
+---
+
 ```
 *SELASA, 11 AGUSTUS 2026*
 

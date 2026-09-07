@@ -643,19 +643,18 @@ HTML_ADMIN = """<!DOCTYPE html>
       const sel = document.getElementById('editorStatusSelect');
       sel.className = 'status-select ' + (newStatus === 'published' ? 'status-published' : (newStatus === 'draft' ? 'status-draft' : 'status-unpublished'));
       
-      // Update frontmatter in editor textarea
       let raw = document.getElementById('codeEditor').value;
       if (raw.startsWith('---')) {
-        if (raw.includes('status:')) {
-          raw = raw.replace(/^status:\s*.*$/m, `status: ${newStatus}`);
+        if (/^status:\s*.*$/m.test(raw)) {
+          raw = raw.replace(/^status:\s*.*$/m, 'status: ' + newStatus);
         } else {
-          raw = raw.replace(/^---/, `---\\nstatus: ${newStatus}`);
+          raw = raw.replace(/^---/, '---\\nstatus: ' + newStatus);
         }
       } else {
-        raw = `---\\nstatus: ${newStatus}\\n---\\n\\n` + raw;
+        raw = '---\\nstatus: ' + newStatus + '\\n---\\n\\n' + raw;
       }
       document.getElementById('codeEditor').value = raw;
-      showToast(`Status diset ke ${newStatus} (klik Simpan Naskah)`);
+      showToast('Status diset ke ' + newStatus + ' (klik Simpan Naskah)');
     }
 
     function updatePreview() {
@@ -968,9 +967,9 @@ class AdminHandler(BaseHTTPRequestHandler):
                 if re.search(r'^status:\s*.*$', raw, re.MULTILINE):
                     updated = re.sub(r'^status:\s*.*$', f"status: {new_status}", raw, flags=re.MULTILINE)
                 else:
-                    updated = re.sub(r'^---', f"---\\nstatus: {new_status}", raw, count=1)
+                    updated = re.sub(r'^---', f"---\nstatus: {new_status}", raw, count=1)
             else:
-                updated = f"---\\nstatus: {new_status}\\n---\\n\\n" + raw
+                updated = f"---\nstatus: {new_status}\n---\n\n" + raw
 
             with open(p1, "w", encoding="utf-8") as fp:
                 fp.write(updated)
