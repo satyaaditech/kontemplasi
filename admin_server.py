@@ -488,6 +488,7 @@ HTML_ADMIN = """<!DOCTYPE html>
           <input type="text" id="editorAuthorInput" placeholder="Nama Penulis..." style="padding:4px 10px; font-size:12px; border-radius:6px; background:#1e293b; border:1px solid #475569; color:#f8fafc; outline:none; width:150px;" oninput="updateEditorAuthor(this.value)">
         </div>
         <div style="display:flex; gap:8px;">
+          <button class="btn btn-sm" style="background:#ef4444; color:#fff;" onclick="deleteCurrentEditorFile()">🗑️ Hapus Naskah</button>
           <button class="btn btn-success" onclick="saveActiveFile()">💾 Simpan Naskah</button>
         </div>
       </div>
@@ -715,7 +716,10 @@ HTML_ADMIN = """<!DOCTYPE html>
           <td>${posterBadge} ${audioBadge}</td>
           <td>${gdocLink}</td>
           <td>
-            <button class="btn btn-secondary btn-sm" onclick="openEditor('${f.fname}', '${f.status}', '${f.category || 'renungan-harian'}', '${f.author || ''}')">✏️ Edit</button>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-secondary btn-sm" onclick="openEditor('${f.fname}', '${f.status}', '${f.category || 'renungan-harian'}', '${f.author || ''}')">✏️ Edit</button>
+              <button class="btn btn-sm" style="background:#ef4444; color:#fff;" onclick="deleteFile('${f.fname}')">🗑️ Hapus</button>
+            </div>
           </td>
         `;
         tbody.appendChild(tr);
@@ -847,6 +851,38 @@ HTML_ADMIN = """<!DOCTYPE html>
           alert('Gagal nyimpen naskah: ' + d.error);
         }
       });
+    }
+
+    function deleteFile(fname) {
+      if (!confirm('Yakin badhe mbusek naskah menika sacara permanen?\\\\n\\\\nBerkas: ' + fname + '\\\\n\\\\n(Aksi menika mboten saged dipun-batalaken)')) {
+        return;
+      }
+      fetch('/api/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file: fname })
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (d.status === 'ok') {
+          showToast('Naskah kasil kabusek: ' + fname);
+          loadData();
+          if (currentActiveFile === fname) {
+            currentActiveFile = '';
+            switchTab('list');
+          }
+        } else {
+          alert('Gagal mbusek naskah: ' + (d.error || 'Unknown error'));
+        }
+      })
+      .catch(err => {
+        alert('Kalupatan jaringan: ' + err);
+      });
+    }
+
+    function deleteCurrentEditorFile() {
+      if (!currentActiveFile) return;
+      deleteFile(currentActiveFile);
     }
 
     function createNewEntry() {
@@ -1117,6 +1153,8 @@ class AdminHandler(BaseHTTPRequestHandler):
             self.handle_api_save()
         elif parsed.path == "/api/status":
             self.handle_api_status()
+        elif parsed.path == "/api/delete":
+            self.handle_api_delete()
         elif parsed.path == "/api/upload":
             self.handle_api_upload()
         elif parsed.path == "/api/deploy":
@@ -1131,7 +1169,36 @@ class AdminHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.end_headers()
         self.wfile.write(json.dumps(data).encode("utf-8"))
-        self.send_json(response)
+
+    def handle_api_delete(self):
+        try:
+            length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(length).decode('utf-8')
+            data = json.loads(body)
+            fname = os.path.basename(data.get("file", "").strip())
+            if not fname:
+                return self.send_json({"status": "error", "error": "No filename specified"}, status=400)
+
+            p_local = os.path.join(RENUNGAN_DIR, fname)
+            p_share = os.path.join(SHARE_DIR, fname)
+
+            deleted_any = False
+            if os.path.exists(p_local):
+                os.remove(p_local)
+                deleted_any = True
+            
+            if os.path.exists(p_share):
+                try:
+                    os.remove(p_share)
+                except Exception:
+                    pass
+
+            if deleted_any:
+                self.send_json({"status": "ok", "file": fname})
+            else:
+                self.send_json({"status": "error", "error": "File not found"}, status=404)
+        except Exception as e:
+            self.send_json({"status": "error", "error": str(e)}, status=500)
 
     def handle_api_get(self, fname):
         fname = os.path.basename(fname)
