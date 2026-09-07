@@ -829,19 +829,24 @@
         const gdocIcon = a.gdoc ? '📄' : '';
         const posterBadge = a.poster ? `<span class="poster-pill">🖼️ Poster</span>` : '';
 
-        const tagsHtml = a.tags.map(t => `<span class="mini-tag">${t}</span>`).join('');
+        const tagsHtml = a.tags.map(t => `<span class="mini-tag">${t.replace(/[*#_~`]/g, '').trim()}</span>`).join('');
+
+        const cleanTitle = a.title.replace(/[*#_~`]/g, '').trim();
+        const cleanDate = (a.date || a.date_iso).replace(/[*#_~`]/g, '').trim();
+        const cleanBook = (a.book || '').replace(/[*#_~`]/g, '').trim();
+        const cleanExcerpt = (a.excerpt || '').replace(/[*#_~`]/g, '').trim();
 
         card.innerHTML = `
           <div class="card-meta">
-            <span class="card-date">${a.date || a.date_iso}</span>
+            <span class="card-date">${cleanDate}</span>
             <div style="display:flex; gap:6px; align-items:center;">
               ${posterBadge}
               <div class="lang-pills">${langPillsHtml}</div>
             </div>
           </div>
-          <h3 class="card-title">${a.title}</h3>
-          <div class="card-book">📖 ${a.book}</div>
-          <div class="card-excerpt">"${a.excerpt || 'Klik kagem maos wedharan jangkep...'}"</div>
+          <h3 class="card-title">${cleanTitle}</h3>
+          <div class="card-book">📖 ${cleanBook}</div>
+          <div class="card-excerpt">"${cleanExcerpt || 'Klik kagem maos wedharan jangkep...'}"</div>
           <div class="card-footer">
             <div class="card-tags">${tagsHtml}</div>
             <div class="card-features">${audioIcon} ${gdocIcon}</div>
