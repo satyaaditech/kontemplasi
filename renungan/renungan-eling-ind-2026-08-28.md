@@ -1,12 +1,3 @@
----
-title: "Mengingat Ketidak-kekalan: Kunci Kedamaian Jiwa yang Sejati ⏳🍃✨"
-date: 2026-08-28
-tags: ['renungan', 'bahasa-indonesia', 'sang-guru-sejati', 'eling', 'tkl', 'hastasila']
-language: id
----
-
-# Mengingat Ketidak-kekalan: Kunci Kedamaian Jiwa yang Sejati ⏳🍃✨
-
 *JUMAT, 28 AGUSTUS 2026*
 
 *RENUNGAN PENYISWAAN*
