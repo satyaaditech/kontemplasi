@@ -4,20 +4,22 @@ import glob
 import re
 import json
 
-def build_strict_pustaka():
+def build_clean_pustaka():
     renungan_dir = "/home/satyaaditech/kontemplasi/renungan"
     pustaka_dir = "/home/satyaaditech/kontemplasi"
     os.makedirs(pustaka_dir, exist_ok=True)
 
     md_files = sorted(glob.glob(os.path.join(renungan_dir, "*.md")))
 
-    def clean_stars(text):
+    def clean_markdown_artifacts(text):
         if not text:
             return ""
-        t = re.sub(r'^\*+|\*+$', '', text.strip()).strip()
+        t = re.sub(r'^[#\s]+', '', text)
         t = re.sub(r'^title:\s*["\']?', '', t)
         t = re.sub(r'["\']?$', '', t)
-        return t.strip()
+        t = t.replace("*", "").replace("_", "").replace("#", "").replace("`", "")
+        t = re.sub(r'\s+', ' ', t).strip()
+        return t
 
     def parse_date(fname, raw_text):
         m = re.search(r'(\d{4}-\d{2}-\d{2})', fname)
@@ -87,14 +89,14 @@ def build_strict_pustaka():
         lines = [l.strip() for l in raw.splitlines() if l.strip()]
         for l in lines[1:6]:
             if "RENUNGAN" not in l and not l.startswith("_Salam") and not l.startswith("_Sugeng") and not l.startswith("_Greetings") and not l.startswith("---"):
-                title = clean_stars(l)
+                title = clean_markdown_artifacts(l)
                 if title: break
         if not title:
             title = core_topic.replace("-", " ").title()
 
         # Date string formatted
         date_match = re.search(r'^\*([A-Z\s,0-9]+)\*', raw, re.MULTILINE)
-        date_str = date_match.group(1).strip() if date_match else date_iso
+        date_str = clean_markdown_artifacts(date_match.group(1).strip()) if date_match else date_iso
 
         # GDoc
         gdoc_match = re.search(r'https://docs\.google\.com/document/d/([a-zA-Z0-9_-]+)(?:/edit)?', raw)
@@ -110,7 +112,6 @@ def build_strict_pustaka():
                 break
 
         # STRICT POSTER MATCHING ONLY
-        # Verified explicit list of actual infographic posters
         poster_file = ""
         group_id = f"{date_iso}_{core_topic}"
 
@@ -146,9 +147,8 @@ def build_strict_pustaka():
         sabda_excerpt = ""
         sabda_match = re.search(r'(?:PETHIKAN DINTEN PUNIKA|SABDA HARI INI|DAILY SCRIPTURE)\s*:\s*\n*(.*?)(?=\n\s*(?:Terjemahan|Translation|💭|\*ANDHARAN|\*URAIAN|\*EXPOSITION|$))', raw, re.DOTALL | re.IGNORECASE)
         if sabda_match:
-            sabda_excerpt = sabda_match.group(1).strip()
-            sabda_excerpt = re.sub(r'[*_"]', '', sabda_excerpt)
-            sabda_excerpt = (sabda_excerpt[:150] + "...") if len(sabda_excerpt) > 150 else sabda_excerpt
+            sabda_excerpt = clean_markdown_artifacts(sabda_match.group(1).strip())
+            sabda_excerpt = (sabda_excerpt[:140] + "...") if len(sabda_excerpt) > 140 else sabda_excerpt
 
         # Tags
         tags = [book_source.split("(")[0].strip()]
@@ -394,9 +394,9 @@ def build_strict_pustaka():
     }}
 
     .hero h2 {{
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 800;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.02em;
       margin-bottom: 8px;
       color: var(--text-main);
     }}
@@ -404,7 +404,7 @@ def build_strict_pustaka():
     .hero p {{
       font-size: 15px;
       color: var(--text-muted);
-      max-width: 600px;
+      max-width: 650px;
       margin: 0 auto 24px;
     }}
 
@@ -489,7 +489,7 @@ def build_strict_pustaka():
     }}
 
     .topic-chip {{
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 20px;
       font-size: 12px;
       font-weight: 500;
@@ -610,9 +610,11 @@ def build_strict_pustaka():
     .mini-tag {{
       background: var(--bg);
       color: var(--text-muted);
-      padding: 2px 6px;
+      padding: 2px 8px;
       border-radius: 4px;
       font-size: 11px;
+      font-weight: 500;
+      border: 1px solid var(--surface-border);
     }}
 
     .card-features {{
@@ -953,13 +955,13 @@ def build_strict_pustaka():
 
       <div class="topic-chips" id="topicChips">
         <span class="topic-chip active" onclick="setTopicFilter('all')">Sedaya Tema</span>
-        <span class="topic-chip" onclick="setTopicFilter('Keteladanan')">#Keteladanan</span>
-        <span class="topic-chip" onclick="setTopicFilter('Sabar')">#Sabar</span>
-        <span class="topic-chip" onclick="setTopicFilter('Rila')">#Rila</span>
-        <span class="topic-chip" onclick="setTopicFilter('Narima')">#Narima</span>
-        <span class="topic-chip" onclick="setTopicFilter('Pengampunan')">#Pengampunan</span>
-        <span class="topic-chip" onclick="setTopicFilter('Eling')">#Eling</span>
-        <span class="topic-chip" onclick="setTopicFilter('Hawa Nafsu')">#HawaNafsu</span>
+        <span class="topic-chip" onclick="setTopicFilter('Keteladanan')">Keteladanan</span>
+        <span class="topic-chip" onclick="setTopicFilter('Sabar')">Sabar</span>
+        <span class="topic-chip" onclick="setTopicFilter('Rila')">Rila</span>
+        <span class="topic-chip" onclick="setTopicFilter('Narima')">Narima</span>
+        <span class="topic-chip" onclick="setTopicFilter('Pengampunan')">Pengampunan</span>
+        <span class="topic-chip" onclick="setTopicFilter('Eling')">Eling</span>
+        <span class="topic-chip" onclick="setTopicFilter('Hawa Nafsu')">Hawa Nafsu</span>
       </div>
     </section>
 
@@ -1067,7 +1069,7 @@ def build_strict_pustaka():
         const gdocIcon = a.gdoc ? '📄' : '';
         const posterBadge = a.poster ? `<span class="poster-pill">🖼️ Poster</span>` : '';
 
-        const tagsHtml = a.tags.map(t => `<span class="mini-tag">#${{t}}</span>`).join('');
+        const tagsHtml = a.tags.map(t => `<span class="mini-tag">${{t}}</span>`).join('');
 
         card.innerHTML = `
           <div class="card-meta">
@@ -1243,7 +1245,7 @@ def build_strict_pustaka():
     function setTopicFilter(topic) {{
       currentTopic = topic;
       document.querySelectorAll('.topic-chip').forEach(c => {{
-        c.classList.toggle('active', c.innerText.includes(topic) || (topic === 'all' && c.innerText.includes('Sedaya')));
+        c.classList.toggle('active', c.innerText.trim() === topic || (topic === 'all' && c.innerText.includes('Sedaya')));
       }});
       renderArticles();
     }}
@@ -1292,7 +1294,7 @@ def build_strict_pustaka():
         f.write(html_template)
     
     shutil.copy(os.path.join(pustaka_dir, "index.html"), "/home/satyaaditech/share/pustaka/index.html")
-    print("Strict Poster Mapping Pustaka built successfully.")
+    print("Clean Markdown Artifacts Pustaka built successfully.")
 
 if __name__ == "__main__":
-    build_strict_pustaka()
+    build_clean_pustaka()
