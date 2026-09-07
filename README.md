@@ -5,7 +5,6 @@ Akses online: [https://kontemplasi.satyaaditech.web.id](https://kontemplasi.saty
 
 ## Akses Admin (Jaringan Tailscale)
 - **URL Admin**: [http://100.92.237.45:8088](http://100.92.237.45:8088)
-- **PIN Keamanan**: `1949`
 
 ## Fitur
 - 📜 50+ Naskah Renungan Harian & Ulasan Serat (Sasangka Jati, BRSR, SKH, TKL, UUJM)
