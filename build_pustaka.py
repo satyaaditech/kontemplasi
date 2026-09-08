@@ -115,7 +115,24 @@ def build_clean_pustaka():
         poster_file = ""
         group_id = f"{date_iso}_{core_topic}"
 
+        # Dynamic poster detection
+        possible_posters = [
+            f"renungan/poster-{core_topic}-{lang}-{date_iso}.png",
+            f"renungan/poster-{core_topic}-{lang}-{date_iso}.jpg",
+            f"renungan/poster-{core_topic}-{date_iso}.png",
+            f"renungan/poster-{core_topic}-{date_iso}.jpg",
+            f"renungan/poster-{core_topic}-{lang}.png",
+            f"renungan/poster-{core_topic}-{lang}.jpg",
+            f"renungan/poster-{core_topic}.png",
+            f"renungan/poster-{core_topic}.jpg",
+        ]
+        for p_cand in possible_posters:
+            if os.path.exists(os.path.join(pustaka_dir, p_cand)):
+                poster_file = p_cand
+                break
+
         explicit_posters = {
+            "2026-09-09_temen": "renungan/poster-temen-2026-09-09.png",
             "2026-09-05_teladan": "renungan/poster-teladan-2026-09-05.jpg",
             "2026-09-02_menerima-perubahan": "renungan/poster-menerima-perubahan-2026-09-02.jpg",
             "2026-09-01_nama-baik": "renungan/poster-nama-baik-2026-09-01.jpg",
@@ -127,7 +144,7 @@ def build_clean_pustaka():
             "2026-08-11_sabar": "renungan/poster-sabda-khusus-kesabaran-2026-08-11.jpg"
         }
 
-        if group_id in explicit_posters and os.path.exists(os.path.join(pustaka_dir, explicit_posters[group_id])):
+        if not poster_file and group_id in explicit_posters and os.path.exists(os.path.join(pustaka_dir, explicit_posters[group_id])):
             poster_file = explicit_posters[group_id]
 
         # Book source
@@ -260,6 +277,7 @@ def build_clean_pustaka():
                 "date": item["date_str"],
                 "gdoc": item["gdoc"] or gdoc,
                 "audio": item["audio"] or audio,
+                "poster": item["poster"] or poster,
                 "raw": item["raw"]
             }
 
@@ -1336,10 +1354,11 @@ def build_clean_pustaka():
       }}
 
       let posterHtml = '';
-      if (activeArticle.poster) {{
+      const activePoster = (v && v.poster) ? v.poster : activeArticle.poster;
+      if (activePoster) {{
         posterHtml = `
           <div class="poster-hero">
-            <img src="${{activeArticle.poster}}" alt="Infografis Poster" class="poster-img" onclick="openLightbox('${{activeArticle.poster}}')">
+            <img src="${{activePoster}}" alt="Infografis Poster" class="poster-img" onclick="openLightbox('${{activePoster}}')">
             <div class="poster-hint">🔍 Klik gambar poster kagem ningali wutuh / memperbesar</div>
           </div>
         `;
