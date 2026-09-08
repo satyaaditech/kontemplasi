@@ -6,7 +6,7 @@ status: published
 author: "Pangestu"
 tags: ["Hasta Sila", "Temen", "Kejujuran", "Katentreman"]
 gdoc: "https://docs.google.com/document/d/16qRDniRqXHQpPAe1hmEc0TQ9WCvHioHR_TpeaZzgxfk/edit"
-youtube: "https://youtu.be/3v96qEWArtw"
+youtube: "https://youtu.be/wgmfZ0M5IxI"
 poster: "renungan/poster-temen-2026-09-09.png"
 ---
 
@@ -15,7 +15,7 @@ poster: "renungan/poster-temen-2026-09-09.png"
 *RENUNGAN PENYISWAAN*
 
 ⚖️🕯️ *TEMEN: Fondasi Kejujuran Batin Menuju Ketenangan Sejati* 🛡️🕊️✨
-📺 Video YouTube : https://youtu.be/3v96qEWArtw
+📺 Video YouTube : https://youtu.be/wgmfZ0M5IxI
 
 _Salam Bahagia Bp/Ibu/Sdr semuanya,_
 
@@ -56,6 +56,6 @@ Orang yang jujur pada batinnya tidak membutuhkan topeng apa pun di hadapan dunia
 
 ---
 Tautan Pustaka Digital & Dokumen:
-• 📺 Video YouTube: https://youtu.be/3v96qEWArtw
+• 📺 Video YouTube: https://youtu.be/wgmfZ0M5IxI
 • 📄 Google Doc: https://docs.google.com/document/d/16qRDniRqXHQpPAe1hmEc0TQ9WCvHioHR_TpeaZzgxfk/edit
 • 🌐 Pustaka Web Kontemplasi: https://kontemplasi.satyaaditech.web.id/#2026-09-09_temen
