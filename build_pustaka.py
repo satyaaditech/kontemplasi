@@ -21,6 +21,11 @@ def build_clean_pustaka():
         t = re.sub(r'\s+', ' ', t).strip()
         return t
 
+    def strip_frontmatter(text):
+        if not text:
+            return ""
+        return re.sub(r'^---[\s\S]*?---\s*', '', text).strip()
+
     def parse_date(fname, raw_text):
         m = re.search(r'(\d{4}-\d{2}-\d{2})', fname)
         if m:
@@ -239,7 +244,7 @@ def build_clean_pustaka():
             "status": status,
             "category": cat,
             "author": author,
-            "raw": raw
+            "raw": strip_frontmatter(raw)
         })
 
     # Group into deduplicated entries
@@ -1365,6 +1370,7 @@ def build_clean_pustaka():
       }}
 
       let formatted = v.raw || '';
+      formatted = formatted.replace(/^---[\s\S]*?---\s*/, '');
       formatted = formatted.replace(/^_(.*?)_$/gm, '<em>$1</em>');
       formatted = formatted.replace(/\\*([^\\*]+)\\*/g, '<strong>$1</strong>');
       formatted = formatted.replace(/_([^_]+)_/g, '<em>$1</em>');
