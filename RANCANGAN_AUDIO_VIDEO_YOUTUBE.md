@@ -37,7 +37,7 @@ Dokumen punika ngandhut asil rembagan, arsitektur, sarta implementasi tahap wiwi
 - **Autentikasi**: OAuth 2.0 Token tersimpan permanen di `~/.config/youtube/token.json`.
 - **Script Uploader**: `/home/satyaaditech/kontemplasi/upload_youtube.py`
 - **Uji Coba Pertama (Verified Sample)**:
-  - Link: https://youtu.be/5uDWXtXuUJw (Status: Unlisted)
+  - Link: https://youtu.be/5uDWXtXuUJw (Status: Public)
 
 ---
 

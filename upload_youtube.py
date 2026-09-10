@@ -25,7 +25,7 @@ def get_authenticated_service():
             
     return build('youtube', 'v3', credentials=creds)
 
-def upload_video(file_path, title, description, tags=None, privacy="unlisted"):
+def upload_video(file_path, title, description, tags=None, privacy="public"):
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Video file not found at {file_path}")
         
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     parser.add_argument("--file", required=True, help="Path to mp4 video")
     parser.add_argument("--title", required=True, help="Video title")
     parser.add_argument("--desc", default="", help="Video description")
-    parser.add_argument("--privacy", default="unlisted", choices=["public", "unlisted", "private"])
+    parser.add_argument("--privacy", default="public", choices=["public", "unlisted", "private"])
     
     args = parser.parse_args()
     res = upload_video(args.file, args.title, args.desc, privacy=args.privacy)
