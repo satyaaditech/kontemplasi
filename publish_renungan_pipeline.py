@@ -34,30 +34,53 @@ def get_google_services():
     sheets_service = build("sheets", "v4", credentials=creds)
     return drive_service, docs_service, sheets_service
 
+def get_media_duration(file_path):
+    cmd = [
+        "ffprobe", "-v", "error",
+        "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1",
+        file_path
+    ]
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if res.returncode != 0:
+        raise RuntimeError(f"FFprobe failed on {file_path}: {res.stderr}")
+    return float(res.stdout.strip())
+
 def render_video(poster_path, audio_path, output_mp4):
-    print(f"🎬 [1/6] Rendering 1080p Video to {output_mp4}...")
+    print(f"🎬 [1/6] Rendering Portrait Video to {output_mp4}...")
+    
+    # 1. Probe exact audio duration
+    audio_duration = get_media_duration(audio_path)
+    print(f"⏱️ Audio duration: {audio_duration:.2f}s ({audio_duration/60:.1f} minutes)")
+    
+    # 2. Render vertical / portrait video ultrafast with exact duration
     cmd = [
         "ffmpeg", "-y",
         "-loop", "1",
-        "-framerate", "1",
         "-i", poster_path,
         "-i", audio_path,
-        "-filter_complex",
-        "[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,boxblur=20:10[bg];[0:v]scale=-1:1000[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2",
-        "-r", "5",
         "-c:v", "libx264",
-        "-preset", "ultrafast",
         "-tune", "stillimage",
+        "-preset", "ultrafast",
+        "-r", "2",
         "-c:a", "aac",
         "-b:a", "192k",
         "-pix_fmt", "yuv420p",
-        "-shortest",
+        "-t", str(audio_duration),
         output_mp4
     ]
-    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if res.returncode != 0:
-        raise RuntimeError(f"FFmpeg render failed: {res.stderr.decode('utf-8', errors='ignore')}")
-    print(f"✅ Video successfully rendered ({os.path.getsize(output_mp4) / (1024*1024):.2f} MB)")
+        raise RuntimeError(f"FFmpeg render failed: {res.stderr}")
+        
+    # 3. Post-render verification gate: verify video duration matches audio duration
+    video_duration = get_media_duration(output_mp4)
+    print(f"🔍 Video duration generated: {video_duration:.2f}s")
+    
+    if abs(video_duration - audio_duration) > 1.0:
+        raise RuntimeError(f"QUALITY GATE ERROR: Video truncated! Expected {audio_duration:.2f}s, got {video_duration:.2f}s.")
+        
+    print(f"✅ Video successfully rendered & verified ({os.path.getsize(output_mp4) / (1024*1024):.2f} MB, {video_duration:.2f}s)")
 
 def upload_to_youtube(video_path, title, description):
     print(f"📺 [2/6] Uploading to YouTube channel @siswatalkstv...")
