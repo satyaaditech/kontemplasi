@@ -6,7 +6,7 @@ status: published
 author: "Pangestu"
 tags: ["TKL", "Kasarasaning Salira", "Hasta Sila", "Olahrasa", "Kesehatan Lahir Batin"]
 gdoc: "https://docs.google.com/document/d/19fhJ_Jo1YKrjj-BqbI-ODHbnJCN7Kg_mCv0kKKmMKVY/edit"
-youtube: "https://youtu.be/OeVUjR8Q1FA"
+youtube: "https://youtu.be/7yscH5bJO3k"
 poster: "renungan/poster-menjaga-raga-2026-09-12.png"
 ---
 
@@ -15,7 +15,7 @@ poster: "renungan/poster-menjaga-raga-2026-09-12.png"
 *RENUNGAN PENYISWAAN*
 
 *Menjaga Raga, Merawat Jiwa: Harmoni Jasmani untuk Kualitas Penyiswaan yang Paripurna 🌿🕊️✨*
-📺 Video YouTube : https://youtu.be/OeVUjR8Q1FA
+📺 Video YouTube : https://youtu.be/7yscH5bJO3k
 
 _Salam Karahayon! 🙏_
 
@@ -54,6 +54,6 @@ Kesehatan raga adalah tiang penyangga bagi kejernihan batin; merawat jasmani den
 
 🙏 Semoga kita semua senantiasa berlimpah Tuntunan dan Perlindungan, Sih dari Sang Guru Sejati. Satuhu 🙏
 
-• 📺 Video YouTube : https://youtu.be/OeVUjR8Q1FA
+• 📺 Video YouTube : https://youtu.be/7yscH5bJO3k
 • 📄 Versi Google Doc : https://docs.google.com/document/d/19fhJ_Jo1YKrjj-BqbI-ODHbnJCN7Kg_mCv0kKKmMKVY/edit
 • 🌐 Pustaka Web Kontemplasi : https://kontemplasi.satyaaditech.web.id/#2026-09-12_menjaga_raga_merawat_jiwa
