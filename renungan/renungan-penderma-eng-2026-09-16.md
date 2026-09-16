@@ -6,6 +6,7 @@ status: published
 author: "Pangestu"
 tags: ["Wahyu Sasangka Jati", "Budi Darma", "Generosity", "Self-Emptying", "Inner Peace"]
 poster: "renungan/poster-penderma-2026-09-16.jpg"
+youtube: "https://youtu.be/GIZ2AUuP79E"
 ---
 
 *WEDNESDAY, SEPTEMBER 16, 2026*

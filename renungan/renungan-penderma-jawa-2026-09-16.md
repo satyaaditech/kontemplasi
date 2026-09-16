@@ -6,6 +6,7 @@ status: published
 author: "Pangestu"
 tags: ["Wahyu Sasangka Jati", "Budi Darma", "Penderma", "Olahrasa", "Pamasrahan Dhiri"]
 poster: "renungan/poster-penderma-2026-09-16.jpg"
+youtube: "https://youtu.be/GIZ2AUuP79E"
 ---
 
 *REBO, 16 SEPTEMBER 2026*
