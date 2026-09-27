@@ -54,4 +54,16 @@ _Bukan liarnya tenaga kuda yang mencelakakan perjalanan, melainkan lengahnya kus
 2. Apakah selama ini saya membiarkan nalar menjadi pembela nafsu ego, ataukah sudah saya tuntun agar tunduk pada Tuntunan Sejati?
 3. Langkah sederhana apa yang bisa saya latih saat ini juga untuk menarik jeda hening dan mengencangkan tali eling lan waspada?
 
-🙏 Semoga kita semua senantiasa berlimpah Tuntunan dan Perlindungan, Sih dari Sang Guru Sejati. Satuhu 🙏
+✨ *APLIKASI NYATA* :
+• **Pribadi**: Menjaga ketenangan batin sejak bangun pagi; tidak membiarkan angen-angen melamun liar atau memicu kecemasan atas hal yang belum terjadi.
+• **Keluarga**: Menahan diri dari reaksi spontan saat ada perbedaan pendapat di rumah; merespons dengan kepala dingin dan kelembutan tutur kata.
+• **Pekerjaan/Usaha**: Tetap fokus dan jernih saat menghadapi tenggat waktu atau tekanan pekerjaan, menyalurkan energi secara produktif tanpa mengeluh.
+• **Masyarakat & Media Sosial**: Memilih untuk tidak terpancing berkomentar pedas atau menyebarkan berita yang sekadar memancing kegaduhan emosi.
+
+🙏 _Mugi kita sedaya tansah pinaringan Berkah, Pitedah, Sih Tuntunan tuwin Pangayomaning Sang Guru Sejati. Satuhu._ 🙏
+
+---
+📖 Tautan Pustaka Digital & Dokumen:
+• 📺 Video YouTube: https://youtu.be/Y0wPBGZ62fU
+• 📄 Google Doc: https://docs.google.com/document/d/1tJmO-pSqvpxd7bgIaLvnys1j7phiRpoAlXQIO5UAO74/edit
+• 🌐 Pustaka Web Kontemplasi: https://kontemplasi.satyaaditech.web.id/#2026-09-27_menuntun-nalar-cipta
