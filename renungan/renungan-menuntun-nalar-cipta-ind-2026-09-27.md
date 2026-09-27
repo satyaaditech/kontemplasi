@@ -20,56 +20,39 @@ poster: "renungan/poster-menuntun-nalar-cipta-2026-09-27.png"
 
 _Salam Bahagia Bp/Ibu/Sdr semuanya,_
 
-Pernahkah kita merasa seharian begitu lelah, bukan karena fisik bekerja keras, melainkan karena pikiran melompat ke sana kemari tanpa henti? Satu kabar buruk di gawai memicu kecemasan; satu perkataan pedas rekan kerja membuat dada panas; lalu nalar sibuk menyusun skenario membela diri atau membalas. Tanpa sadar, kita terseret pusaran emosi yang menguras energi sukma.
-
 *📖 SABDA HARI INI :*
 
-Bawa Raos ing Salebeting Raos, Bab XXI :
-> _"Badan wadhag daksanepakake : kreta, nafsu patang prakara (karep) iku : jaran, angen-angen daksanepakake : kusir, Roh daksanepakake : kang nunggang kreta. Yen angen-angen ora bisa ngendhaleni nafsu, jaran lumayu sakarepe dhewe, kreta mesthi rusak, kang nunggang ya melu rusak utawa cilaka."_
+Bawa Raos ing Salebeting Raos, Bab XXI : _"*Badan wadhag daksanepakake : kreta, nafsu patang prakara (karep) iku : jaran, angen-angen daksanepakake : kusir, Roh daksanepakake : kang nunggang kreta... Wataking jaran (nafsu kewani) bisa dadi becik lan mbangun turut (mituhu marang piwulang kautaman) awit saka kaprigelan tuntunane utawa pangrehing si ‘kusir’ (angen-angen), kosok baline yen si ‘kusir’ kurang santosa lan ora prayitna (ora ngati-ati) anggone nyekeli lise; ‘jaran’ bakal mbedhal playune nrajang kasusilaning batin.*"_
 
----
+💭 *URAIAN* :
 
-💡 *WEWARING GESANG (Renungan)* :
+Pernahkah di sela-sela hari kita merasa kepala begitu penuh dan lelah, bukan karena beratnya aktivitas jasmani, melainkan karena pikiran yang tak henti-hentinya berputar? Seringkali kita tanpa sadar mendebat orang lain di dalam kepala kita sebelum bertemu, menyusun kekhawatiran atas hal-hal yang belum tentu terjadi, atau tergesa-gesa membalas pesan yang sedikit menyinggung ego. Pikiran dan nalar kita seolah berlari kencang tanpa rem, meloncat liar dari satu prasangka ke prasangka berikutnya hingga batin kehilangan rasa tenteram.
 
-Sang Guru Sejati memberikan perumpamaan yang sangat nyata dan membumi:
-1. **Badan Wadag** adalah **Kereta** — wahana kita berkarya di dunia fana.
-2. **Nafsu Empat Perkara (Karep)** adalah **Kuda Penarik** — sumber daya gerak, dorongan, dan vitalitas.
-3. **Angen-angen (Nalar / Cipta)** adalah **Kusir** — pemegang tali kekang dan penentu arah.
-4. **Roh (Sang Sukma)** adalah **Penumpang Sejati** — pemilik hakiki atas perjalanan hidup ini.
+Ajaran Sang Guru Sejati memberikan pasemon yang sangat jernih dan mendalam mengenai dinamika diri kita laksana sebuah kereta kencana. Raga jasmani adalah keretanya, hawa nafsu empat perkara adalah kuda-kudanya, angen-angen (cipta, nalar, dan akal budi) adalah kusirnya, sedangkan Roh Suci adalah sang penumpang sejati. Kuda-kuda nafsu memiliki daya dorong yang luar biasa besar. Apabila kusir batin kita terlena, lalai, atau mabuk oleh pembenaran nalar, tali kekang kesadaran akan terlepas. Akibatnya, kuda-kuda itu berlari membabi-buta, menyeret raga menabrak pagar tata krama, melukai kesusilaan, dan menjerumuskan kita ke dalam penyesalan. Sebaliknya, ketika kusir kita kokoh, waspada, dan terampil, daya nafsu justru berbalik menjadi tenaga kebajikan yang sangat berguna untuk mengabdi dan berkarya.
 
-Kuda bukanlah musuh. Nafsu lawwamah, amarah, sufiah, dan mutmainah diciptakan sebagai daya hidup. Namun celakanya, kusir batin (pikiran) kerap terbius oleh rayuan kuda atau panik saat kuda tersentak.
+Olah rasa mengajak kita untuk setia melatih ketangkasan sang kusir batin di setiap tarikan nafas. Menuntun nalar dan cipta bukanlah mematikan akal logika atau berhenti berpikir, melainkan mengembalikan nalar pada fungsinya sebagai pelayan, bukan penentu arah hidup yang sewenang-wenang. Saat nalar mulai gaduh memperdebatkan siapa yang benar dan salah demi membela ego Sang Aku, mari mengambil jeda hening sejenak: melepaskan ketegangan, menghadapkan rasa kepada Sang Guru Sejati di lubuk sanubari, dan membiarkan Sang Penumpang Sejati yang menuntun arah perjalanan. Hidup menjadi tenteram bukan karena sekeliling kita sunyi dari persoalan, melainkan karena kendali batin kita teguh berpegang pada Tuntunan-Nya.
 
-Ketika nalar justru bersekutu dengan amarah atau ketakutan, kusir melepaskan tali kendali kesadaran. Kuda berlari liar membabi buta, kereta tubuh terguncang remuk, dan Sang Penumpang Sejati terancam celaka.
+🧘 *PRAKTIK* :
 
-Menata batin bukan berarti membunuh daya cipta atau mematikan perasaan, melainkan mengembalikan kusir ke posisinya: waspada, tenang, berpegang teguh pada dawuh Sang Guru Sejati, serta tidak membiarkan angen-angen hanyut dalam lamunan dan prasangka liar.
+🌿 *Latihan Memegang Kendali Batin* 🌿 — lakukan sepanjang hari ini:
 
----
+1. 🛑 *Jeda Sadar Saat Terpancing (Micro-Pause)*: Ketika ada pemicu yang membuat dada sesak atau emosi ingin meledak, berhenti sejenak selama 3–5 detik. Sadari bahwa kuda nafsu sedang mencoba merebut tali kekang.
+2. 🧘♂️ *Mengencangkan Tali Kendali (Eling lan Waspada)*: Alihkan perhatian dari riuhnya perdebatan di kepala menuju heningnya nafas di dada. Sambungkan rasa kepada Sang Guru Sejati agar batin kembali bening.
+3. 🐎 *Mengarahkan Daya untuk Kebaikan*: Salurkan dorongan energi yang ada bukan untuk berbantah-bantahan atau mengeluh, melainkan untuk merampungkan tugas dengan teliti dan menyebarkan sapaan yang menyejukkan bagi sesama.
 
-🧘 *PRAKTIK KEHENINGAN HARI INI* :
+✅ Latihan ini menumbuhkan ketenteraman batin dan menjaga kita tetap eling lan waspada di setiap langkah.
 
-🌿 *Latihan Tali Kendali Batin (Eling & Waspada)* 🌿
+🎯 *RENUNGAN* :
 
-1. 🛑 **Jeda Kendali Saat Terpancing (Micro-Pause)**:
-   Ketika muncul rasa tersinggung, cemas mendadak, atau dorongan tergesa-gesa: tarik napas pelan dan heningkan diri 3 detik. Ucapkan dalam batin: *"Ini hanya kuda yang tersentak, kusir tetap tenang memegang kendali."*
-2. 👁️ **Memeriksa Kusir Pikiran**:
-   Amati apakah saat ini angen-angen sedang sibuk menciptakan drama masa lalu atau ketakutan masa depan? Jika ya, bawa kembali perhatian utuh ke langkah kaki, hembusan napas, dan tugas di depan mata.
-3. 🕊️ **Menyerahkan Arah kepada Sang Penumpang**:
-   Tutup aktivitas siang atau malam dengan hening sejenak (manembah), menyerahkan kepasrahan raga dan cipta ke haribaan Hyang Maha Suci.
+_Bukan liarnya tenaga kuda yang mencelakakan kereta, melainkan lengahnya kusir yang melepaskan tali kekang kesadaran batin._
 
----
+📝 *APLIKASI* :
 
-🎯 *MUTIARA PENUTUP* :
+1. Situasi atau percakapan apa yang hari ini paling berisiko memancing pikiran saya berlari liar dan kehilangan ketenangan?
+2. Apakah selama ini saya membiarkan nalar mendikte hidup demi memenangkan ego, ataukah sudah menuntunnya agar tunduk pada Tuntunan Sejati?
+3. Langkah kecil apa yang dapat saya biasakan hari ini untuk menarik jeda hening di tengah riuhnya pekerjaan?
 
-_Bukan liarnya tenaga kuda yang mencelakakan kereta, melainkan lengahnya kusir yang melepaskan tali kekang kesadaran._
-
----
-
-📝 *CATATAN APLIKASI HARIAN* :
-
-1. Saat menghadapi orang lain yang sedang emosi, sadarilah kudanya sedang lepas kendali. Jaga kusir kita agar tidak ikut terpancing melepaskan tali kekang.
-2. Saring konsumsi visual dan kabar digital yang sekadar memberi makan angen-angen tanpa faedah nyata bagi kesucian batin.
-
-Satuhu 🙏
+🙏 Semoga kita semua senantiasa berlimpah Tuntunan dan Perlindungan, Sih dari Sang Guru Sejati. Satuhu 🙏
 
 ---
 📖 *Tautan Pustaka Digital & Dokumen:*
