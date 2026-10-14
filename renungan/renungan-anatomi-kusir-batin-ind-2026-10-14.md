@@ -6,6 +6,7 @@ status: published
 author: "Pangestu"
 tags: ["Bawa Raos (BRSR)", "Olahrasa", "Eling lan Waspada", "Kusir Batin", "Neurosains", "Executive Function"]
 gdoc: "https://docs.google.com/document/d/1KmW1VBzVxTjZzPsKJGLJGKtFSP81eSEmVsjVYI9P6Xk/edit"
+youtube: "https://youtu.be/4yLCq3vgl-A"
 ---
 
 *RABU WAGE, 14 OKTOBER 2026*
@@ -13,6 +14,8 @@ gdoc: "https://docs.google.com/document/d/1KmW1VBzVxTjZzPsKJGLJGKtFSP81eSEmVsjVY
 *RENUNGAN PENYISWAAN*
 
 *TEMA: Anatomi Kusir Batin: Mengapa Pikiran Anda Bukan Tuan dari Hidup Anda? 🐎*
+
+🎧 *Dengarkan di YouTube*: https://youtu.be/4yLCq3vgl-A
 
 _Salam Karahayon 🙏_
 
@@ -46,5 +49,6 @@ Ajaran Sang Guru Sejati menyingkapkan anatomi batin yang amat terang: pikiran (a
 
 🙏 Semoga Kita Senantiasa Berlimpah dengan Sih, Tuntunan, Pepadang, Pangayoman dari Sang Guru Sejati. Satuhu 🙏
 
+• 📺 *Video YouTube*: https://youtu.be/4yLCq3vgl-A
 • 🌐 *Pustaka Web Kontemplasi*: https://kontemplasi.satyaaditech.web.id/#2026-10-14_anatomi-kusir-batin
 • 📄 *Versi Dokumen Google Docs*: https://docs.google.com/document/d/1KmW1VBzVxTjZzPsKJGLJGKtFSP81eSEmVsjVYI9P6Xk/edit
