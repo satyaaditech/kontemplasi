@@ -3,8 +3,8 @@ title: "Terjebak Masa Lalu dan Cemas Masa Depan: Rahasia Sains Hadir Utuh di Det
 date: "2026-10-16"
 hari: "Jumat Legi"
 kitab: "[BRSR] Bawa Raos Ing Salebeting Raos, Bab XXVIII (Piweling Bapak Pangrasa marang Prabawa)"
-youtube_id: "https://youtu.be/FbSXHvXqOMI"
-youtube_url: "https://youtu.be/FbSXHvXqOMI"
+youtube_id: "https://youtu.be/Fo-qheh25-8"
+youtube_url: "https://youtu.be/Fo-qheh25-8"
 gdoc_url: "https://docs.google.com/document/d/1xBzNDif8QKtWmGfFV_pVl5R4Wm1oqinYTbY2L6u_Duw/edit"
 thumbnail: "/assets/img/2026-10-16_terjebak-masa-lalu-dan-cemas-masa-depan.jpg"
 ---
