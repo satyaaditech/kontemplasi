@@ -3,6 +3,7 @@ title: "Mendeteksi Kebutaan Spiritual: Ketika Kepintaran Nalar Menutupi Pengerti
 date: 2026-10-15
 category: renungan-harian
 youtube: "https://youtu.be/gdLFUsY8KfY"
+gdoc: "https://docs.google.com/document/d/1j1gBUqCEMivfxRX9rCuA9c8f6rNeSfrwsenPErEnU9g/edit"
 status: published
 author: "Pangestu"
 tags: ["Sasangka Jati (SSJ)", "Tunggal Sabda", "Eling lan Waspada", "Kebutaan Spiritual", "Intellectual Bypass", "Laku Sejati"]
@@ -50,3 +51,4 @@ Sang Guru Sejati paring pepeling ingkang landhep sanget: kawruh ingkang namung m
 
 • 📺 *Video YouTube*: https://youtu.be/gdLFUsY8KfY
 • 🌐 *Pustaka Web Kontemplasi*: https://kontemplasi.satyaaditech.web.id/#2026-10-15_mendeteksi-kebutaan-spiritual
+• 📄 *Google Doc*: https://docs.google.com/document/d/1j1gBUqCEMivfxRX9rCuA9c8f6rNeSfrwsenPErEnU9g/edit
