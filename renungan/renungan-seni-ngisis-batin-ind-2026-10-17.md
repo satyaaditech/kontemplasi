@@ -2,7 +2,7 @@
 title: "Seni Ngisis Batin: Detoksifikasi Otak dari Kebisingan Informasi Digital 🌿"
 date: 2026-10-17
 category: renungan-harian
-youtube: "https://youtu.be/Hx-38CpAwAI"
+youtube: "https://youtu.be/1Bt9bthvGyE"
 gdoc: "https://docs.google.com/document/d/1-KpnchYeTTVYFnT7W35NwIIkXigh5pZw8ONKl4EfuQ0/edit"
 status: published
 author: "Pangestu"
@@ -15,7 +15,7 @@ tags: ["Sasangka Jati (SSJ)", "Panembah", "Ngisis Batin", "Detoks Digital", "Sai
 
 *Seni Ngisis Batin: Detoksifikasi Otak dari Kebisingan Informasi Digital 🌿*
 
-🎧 *Dengarkan di YouTube*: https://youtu.be/Hx-38CpAwAI
+🎧 *Dengarkan di YouTube*: https://youtu.be/1Bt9bthvGyE
 
 _Salam Karahayon 🙏_
 
@@ -56,5 +56,5 @@ Ajaran Sang Guru Sejati dalam *Serat Sasangka Jati* memberikan petunjuk yang san
 🙏 *Semoga kita senantiasa berlimpah dengan sih, tuntunan, pepadang, dan pangayoman dari Sang Guru Sejati. Satuhu.* 🙏
 
 ---
-• 📺 *YouTube Video*: https://youtu.be/Hx-38CpAwAI
+• 📺 *YouTube Video*: https://youtu.be/1Bt9bthvGyE
 • 📄 *Google Doc*: https://docs.google.com/document/d/1-KpnchYeTTVYFnT7W35NwIIkXigh5pZw8ONKl4EfuQ0/edit
